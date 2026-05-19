@@ -18,8 +18,8 @@ export class SmartReplyFallbackService implements AiSmartReplierPort {
   ): Promise<string[]> {
     return runWithFallbackChain(
       [
-        { name: "groq", fn: () => this.groq.generateReplies(messages) },
-        { name: "cerebras", fn: () => this.cerebras.generateReplies(messages) },
+        { name: "groq", model: "llama-3.3-70b-versatile", feature: "smart_reply", fn: () => this.groq.generateReplies(messages) },
+        { name: "cerebras", model: "gpt-oss-120b", feature: "smart_reply", fn: () => this.cerebras.generateReplies(messages) },
       ],
       this.logger,
     );

@@ -14,16 +14,19 @@ export function isProviderRateLimitError(err: unknown): boolean {
 }
 
 export async function runWithFallbackChain<T>(
-  providers: Array<{ name: string; fn: () => Promise<T> }>,
+  providers: Array<{ name: string; model: string; feature: string; fn: () => Promise<T> }>,
   logger: Logger,
 ): Promise<T> {
   for (const provider of providers) {
+    logger.log(
+      `[AI] feature=${provider.feature} provider=${provider.name} model=${provider.model}`,
+    );
     try {
       return await provider.fn();
     } catch (err) {
       const isRateLimit = isProviderRateLimitError(err);
       logger.warn(
-        `[AI] provider=${provider.name} failed — ${isRateLimit ? "rate-limited, trying next" : "error, trying next"}: ${err instanceof Error ? err.message : String(err)}`,
+        `[AI] feature=${provider.feature} provider=${provider.name} failed — ${isRateLimit ? "rate-limited, trying next" : "error, trying next"}: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }

@@ -10,7 +10,7 @@ import {
   RewriteTone,
 } from "../../application/ports/ai-rewriter.port";
 
-const MODEL = "llama-3.3-70b";
+const MODEL = "gpt-oss-120b";
 const CEREBRAS_BASE_URL = "https://api.cerebras.ai/v1";
 
 const SYSTEM_INSTRUCTION =

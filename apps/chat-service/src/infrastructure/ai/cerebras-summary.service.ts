@@ -7,7 +7,7 @@ import { ConfigService } from "@nestjs/config";
 import OpenAI from "openai";
 import { AiSummarizerPort } from "../../application/ports/ai-summarizer.port";
 
-const MODEL = "llama-3.3-70b";
+const MODEL = "gpt-oss-120b";
 const CEREBRAS_BASE_URL = "https://api.cerebras.ai/v1";
 
 const SYSTEM_INSTRUCTION =
