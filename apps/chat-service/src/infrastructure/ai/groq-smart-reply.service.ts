@@ -7,7 +7,7 @@ import { ConfigService } from "@nestjs/config";
 import Groq from "groq-sdk";
 import { AiSmartReplierPort } from "../../application/ports/ai-smart-reply.port";
 
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
 const SYSTEM_INSTRUCTION =
   "Generate exactly 3 short, natural chat reply suggestions (2–10 words each). " +

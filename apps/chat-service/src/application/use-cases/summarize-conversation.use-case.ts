@@ -59,7 +59,7 @@ export class SummarizeConversationUseCase {
       limit,
     );
 
-    const messages = raw.filter((m) => !m.isDeleted);
+    const messages = raw.filter((m) => !m.isDeleted && !m.isAI);
 
     if (messages.length === 0) {
       throw new BadRequestException("No messages to summarize");

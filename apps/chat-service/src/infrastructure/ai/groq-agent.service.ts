@@ -11,7 +11,7 @@ import { TavilyWebSearchService } from "./tavily-web-search.service";
 import { OpenWeatherService } from "./openweather.service";
 import { UrlSummarizerService } from "./url-summarizer.service";
 
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
 // Turn 1: select the right tool (scope filtering lives here)
 const SYSTEM_PROMPT =

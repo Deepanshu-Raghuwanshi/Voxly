@@ -89,7 +89,7 @@ export const SummaryModal = ({
         ref={panelRef}
         tabIndex={-1}
         className={cn(
-          "w-full max-w-md bg-card rounded-2xl shadow-xl p-6 flex flex-col gap-4 outline-none",
+          "w-full max-w-md bg-card rounded-2xl shadow-xl p-6 flex flex-col gap-4 outline-none max-h-[80vh]",
         )}
         onClick={(e) => e.stopPropagation()}
       >
@@ -130,8 +130,8 @@ export const SummaryModal = ({
         )}
 
         {!isLoading && !isError && summary && (
-          <>
-            <div className="flex flex-col gap-2">
+          <div className="flex flex-col flex-1 min-h-0 gap-4">
+            <div className="flex flex-col gap-2 overflow-y-auto min-h-0">
               {summary
                 .split("\n")
                 .filter((line) => line.trim())
@@ -144,7 +144,7 @@ export const SummaryModal = ({
                   </p>
                 ))}
             </div>
-            <div className="flex justify-end pt-2 border-t border-border">
+            <div className="flex justify-end pt-2 border-t border-border flex-shrink-0">
               <button
                 type="button"
                 onClick={handleCopy}
@@ -163,7 +163,7 @@ export const SummaryModal = ({
                 {copied ? t("copied") : t("copy")}
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>

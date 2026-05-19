@@ -18,7 +18,7 @@ export class SummaryFallbackService implements AiSummarizerPort {
   ): Promise<string> {
     return runWithFallbackChain(
       [
-        { name: "groq", model: "llama-3.3-70b-versatile", feature: "summarize", fn: () => this.groq.summarize(messages) },
+        { name: "groq", model: "meta-llama/llama-4-scout-17b-16e-instruct", feature: "summarize", fn: () => this.groq.summarize(messages) },
         { name: "cerebras", model: "gpt-oss-120b", feature: "summarize", fn: () => this.cerebras.summarize(messages) },
       ],
       this.logger,

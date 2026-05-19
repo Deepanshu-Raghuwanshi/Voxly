@@ -23,7 +23,7 @@ export class AgentFallbackService implements AiAgentPort {
   ): Promise<AgentResult> {
     return runWithFallbackChain(
       [
-        { name: "groq", model: "llama-3.3-70b-versatile", feature: "agent", fn: () => this.groq.run(query, context, userId) },
+        { name: "groq", model: "meta-llama/llama-4-scout-17b-16e-instruct", feature: "agent", fn: () => this.groq.run(query, context, userId) },
         { name: "cerebras", model: "gpt-oss-120b", feature: "agent", fn: () => this.cerebras.run(query, context, userId) },
       ],
       this.logger,

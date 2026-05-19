@@ -19,7 +19,7 @@ export class RewriteFallbackService implements AiRewriterPort {
   async rewrite(text: string, tone: RewriteTone): Promise<string> {
     return runWithFallbackChain(
       [
-        { name: "groq", model: "llama-3.3-70b-versatile", feature: "rewrite", fn: () => this.groq.rewrite(text, tone) },
+        { name: "groq", model: "meta-llama/llama-4-scout-17b-16e-instruct", feature: "rewrite", fn: () => this.groq.rewrite(text, tone) },
         { name: "cerebras", model: "gpt-oss-120b", feature: "rewrite", fn: () => this.cerebras.rewrite(text, tone) },
       ],
       this.logger,
