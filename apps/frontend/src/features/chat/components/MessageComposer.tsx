@@ -140,10 +140,10 @@ export const MessageComposer = ({
     if (content.toLowerCase().startsWith("@ai")) {
       const query = content.replace(/^@ai\s*/i, "").trim();
       if (!query) {
-        toast(
-          "Add your question after @AI. Example: @AI weather in Tokyo",
-          { position: "bottom-center", duration: 3000 },
-        );
+        toast("Add your question after @AI. Example: @AI weather in Tokyo", {
+          position: "bottom-center",
+          duration: 3000,
+        });
         return;
       }
       triggerAiAgent(content);
@@ -242,7 +242,9 @@ export const MessageComposer = ({
             value={draft}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder={draft.trim() ? t("placeholder") : t("placeholder_with_ai_hint")}
+            placeholder={
+              draft.trim() ? t("placeholder") : t("placeholder_with_ai_hint")
+            }
             rows={1}
             disabled={isPending || isRewriting || isAgentPending}
             className={cn(

@@ -8,11 +8,22 @@ interface AiThinkingIndicatorProps {
 }
 
 function resolveLabel(draft: string): string {
-  const query = draft.replace(/^@ai\s*/i, "").trim().toLowerCase();
+  const query = draft
+    .replace(/^@ai\s*/i, "")
+    .trim()
+    .toLowerCase();
   if (!query) return "🤖 AI is thinking...";
-  if (query.includes("weather") || query.includes("temperature") || query.includes("climate"))
+  if (
+    query.includes("weather") ||
+    query.includes("temperature") ||
+    query.includes("climate")
+  )
     return "🌤️ Checking weather...";
-  if (query.startsWith("http") || query.includes("summarize") || query.includes("url"))
+  if (
+    query.startsWith("http") ||
+    query.includes("summarize") ||
+    query.includes("url")
+  )
     return "🔗 Summarizing URL...";
   if (query.includes("translate") || query.includes("translation"))
     return "🌐 Translating...";

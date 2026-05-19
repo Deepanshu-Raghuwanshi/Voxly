@@ -196,7 +196,9 @@ export class GroqAgentService implements AiAgentPort {
       };
     }
 
-    this.logger.log(`[AGENT] userId=${userId} tool=${toolName} query="${query}"`);
+    this.logger.log(
+      `[AGENT] userId=${userId} tool=${toolName} query="${query}"`,
+    );
 
     let toolResult: string;
     try {

@@ -354,7 +354,10 @@ export const usePresence = () => {
           isDeleted: false,
           isEdited: false,
           isAI: data.isAI,
-          toolUsed: data.toolUsed != null ? (data.toolUsed as Message["toolUsed"]) : undefined,
+          toolUsed:
+            data.toolUsed != null
+              ? (data.toolUsed as Message["toolUsed"])
+              : undefined,
           reactions: [],
           createdAt: data.createdAt,
           updatedAt: data.updatedAt,
