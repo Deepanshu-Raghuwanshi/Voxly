@@ -136,6 +136,9 @@ importers:
       nodemailer:
         specifier: ^8.0.1
         version: 8.0.3
+      openai:
+        specifier: ^6.38.0
+        version: 6.38.0(ws@8.18.0)(zod@4.3.6)
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -12473,6 +12476,21 @@ packages:
         integrity: sha512-7x81NCL719oNbsq/3mh+hVrAWmFuEYUqrq/Iw3kUzH8ReypT9QQ0BLoJS7/G9k6N81XjW4qHWtjWwe/9eLy1EQ==,
       }
     engines: { node: ">=12" }
+
+  openai@6.38.0:
+    resolution:
+      {
+        integrity: sha512-AoMplt2UalrpgUDMh3L09QWjNRlgJPipclQvA6sYAaeF6nHNBMgmikAZGmcYLn8on4d9sQY9Q8bOLfrBS7Lc8g==,
+      }
+    hasBin: true
+    peerDependencies:
+      ws: ^8.18.0
+      zod: ^3.25 || ^4.0
+    peerDependenciesMeta:
+      ws:
+        optional: true
+      zod:
+        optional: true
 
   openapi-typescript@7.13.0:
     resolution:
@@ -25591,6 +25609,11 @@ snapshots:
       define-lazy-prop: 2.0.0
       is-docker: 2.2.1
       is-wsl: 2.2.0
+
+  openai@6.38.0(ws@8.18.0)(zod@4.3.6):
+    optionalDependencies:
+      ws: 8.18.0
+      zod: 4.3.6
 
   openapi-typescript@7.13.0(typescript@5.9.3):
     dependencies:

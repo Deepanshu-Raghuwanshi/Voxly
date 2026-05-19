@@ -4,10 +4,11 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import Groq from "groq-sdk";
+import OpenAI from "openai";
 import { AiSmartReplierPort } from "../../application/ports/ai-smart-reply.port";
 
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = "llama-3.3-70b";
+const CEREBRAS_BASE_URL = "https://api.cerebras.ai/v1";
 
 const SYSTEM_INSTRUCTION =
   "Generate exactly 3 short, natural chat reply suggestions (2–10 words each). " +
@@ -26,22 +27,25 @@ function buildPrompt(
 }
 
 @Injectable()
-export class GroqSmartReplyService implements AiSmartReplierPort {
-  private readonly logger = new Logger(GroqSmartReplyService.name);
-  private readonly groq: Groq;
+export class CerebrasSmartReplyService implements AiSmartReplierPort {
+  private readonly logger = new Logger(CerebrasSmartReplyService.name);
+  private readonly client: OpenAI | null;
 
   constructor(private readonly config: ConfigService) {
-    this.groq = new Groq({
-      apiKey: config.get<string>("GROQ_API_KEY")!,
-      timeout: 10_000,
-    });
+    const key = config.get<string>("CEREBRAS_API_KEY");
+    this.client = key
+      ? new OpenAI({ apiKey: key, baseURL: CEREBRAS_BASE_URL, timeout: 10_000 })
+      : null;
   }
 
   async generateReplies(
     messages: Array<{ role: "me" | "them"; content: string }>,
   ): Promise<string[]> {
+    if (!this.client)
+      throw new ServiceUnavailableException("Cerebras not configured");
+
     try {
-      const result = await this.groq.chat.completions.create({
+      const result = await this.client.chat.completions.create({
         model: MODEL,
         messages: [
           { role: "system", content: SYSTEM_INSTRUCTION },
@@ -60,7 +64,7 @@ export class GroqSmartReplyService implements AiSmartReplierPort {
 
       if (suggestions.length < 3) {
         this.logger.warn(
-          `Groq returned only ${suggestions.length} usable suggestion(s) — need 3`,
+          `Cerebras returned only ${suggestions.length} usable suggestion(s) — need 3`,
         );
         throw new ServiceUnavailableException(
           "AI provider returned insufficient suggestions",
@@ -71,7 +75,7 @@ export class GroqSmartReplyService implements AiSmartReplierPort {
       if (err instanceof ServiceUnavailableException) throw err;
       const msg = err instanceof Error ? err.message : String(err);
       this.logger.error(
-        `Groq smart reply failed: ${msg}`,
+        `Cerebras smart reply failed: ${msg}`,
         err instanceof Error ? err.stack : undefined,
       );
       throw new ServiceUnavailableException("AI provider unavailable");
