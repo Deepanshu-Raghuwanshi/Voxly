@@ -38,3 +38,9 @@ export type AiSmartReplyResponse =
 export type AiSummarizeDto = chatComponents["schemas"]["AiSummarizeDto"];
 export type AiSummarizeResponse =
   chatComponents["schemas"]["AiSummarizeResponse"];
+export type AiAgentDto = chatComponents["schemas"]["AiAgentDto"];
+export type AiAgentResponse = chatComponents["schemas"]["AiAgentResponse"];
+export type AiAgentBlockedResponse =
+  chatComponents["schemas"]["AiAgentBlockedResponse"];
+export type AiAgentRateLimitedResponse =
+  chatComponents["schemas"]["AiAgentRateLimitedResponse"];

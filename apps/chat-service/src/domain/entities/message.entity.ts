@@ -21,6 +21,9 @@ export interface MessageProps {
   isEdited: boolean;
   reactions?: ReactionProps[];
   replyTo?: ReplyToProps;
+  isAI?: boolean;
+  toolUsed?: string | null;
+  agentQuery?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -57,6 +60,15 @@ export class MessageEntity {
   }
   get replyTo(): ReplyToProps | undefined {
     return this.props.replyTo;
+  }
+  get isAI(): boolean {
+    return this.props.isAI ?? false;
+  }
+  get toolUsed(): string | null | undefined {
+    return this.props.toolUsed;
+  }
+  get agentQuery(): string | null | undefined {
+    return this.props.agentQuery;
   }
   get createdAt() {
     return this.props.createdAt;

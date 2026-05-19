@@ -5,20 +5,13 @@ import { renderWithIntl } from "../utils/render";
 import type { Conversation } from "@shared-types";
 
 // Stub child components — we only care about the state wiring in ConversationView
-vi.mock(
-  "../../src/features/chat/components/ConversationHeader",
-  () => ({
-    ConversationHeader: ({
-      onSummarize,
-    }: {
-      onSummarize: () => void;
-    }) => (
-      <button data-testid="summarize-btn" onClick={onSummarize}>
-        Summarize
-      </button>
-    ),
-  }),
-);
+vi.mock("../../src/features/chat/components/ConversationHeader", () => ({
+  ConversationHeader: ({ onSummarize }: { onSummarize: () => void }) => (
+    <button data-testid="summarize-btn" onClick={onSummarize}>
+      Summarize
+    </button>
+  ),
+}));
 
 vi.mock("../../src/features/chat/components/MessageList", () => ({
   MessageList: () => <div data-testid="message-list" />,
@@ -26,6 +19,10 @@ vi.mock("../../src/features/chat/components/MessageList", () => ({
 
 vi.mock("../../src/features/chat/components/SmartReplyChips", () => ({
   SmartReplyChips: () => null,
+}));
+
+vi.mock("../../src/features/chat/components/AiThinkingIndicator", () => ({
+  AiThinkingIndicator: () => null,
 }));
 
 vi.mock("../../src/features/chat/components/MessageComposer", () => ({

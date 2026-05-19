@@ -213,6 +213,8 @@
       },
       "composer": {
         "placeholder": "Type a message...",
+        "placeholder_with_ai_hint": "Message... or tap @AI to search, weather, translate",
+        "ai_agent_chip_label": "Activate AI agent",
         "send": "Send",
         "emoji_button_label": "Open emoji picker",
         "cancel_reply": "Cancel reply",
@@ -266,7 +268,9 @@
         "back_to_chats": "Back to conversations",
         "no_longer_friends": "You're no longer friends with this user",
         "rewrite_failed": "AI rewrite failed. Please try again.",
-        "summarize_rate_limited": "Summarize is limited to 15 times per minute. Please wait."
+        "summarize_rate_limited": "Summarize is limited to 15 times per minute. Please wait.",
+        "agent_unavailable": "AI is unavailable right now, try again shortly.",
+        "agent_rate_limited": "Slow down! AI is rate limited."
       }
     },
     "navbar": {

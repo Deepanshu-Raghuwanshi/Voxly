@@ -59,6 +59,15 @@ export class Message extends Document {
   @Prop({ type: ReplyToDocumentSchema, default: null })
   replyTo?: ReplyToDocument | null;
 
+  @Prop({ default: false })
+  isAI!: boolean;
+
+  @Prop({ type: String, default: null })
+  toolUsed?: string | null;
+
+  @Prop({ type: String, default: null })
+  agentQuery?: string | null;
+
   readonly createdAt!: Date;
   readonly updatedAt!: Date;
 }

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ConversationHeader } from "./ConversationHeader";
 import { MessageList } from "./MessageList";
 import { SmartReplyChips } from "./SmartReplyChips";
+import { AiThinkingIndicator } from "./AiThinkingIndicator";
 import { MessageComposer } from "./MessageComposer";
 import { SummaryModal } from "./SummaryModal";
 import { Spinner } from "../../../shared/components/ui/spinner";
@@ -137,6 +138,7 @@ export const ConversationView = ({ conversationId }: ConversationViewProps) => {
         conversationId={conversationId}
         messages={displayMessages}
       />
+      <AiThinkingIndicator conversationId={conversationId} />
       <MessageComposer
         conversationId={conversationId}
         participants={conversation.participants}

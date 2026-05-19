@@ -27,6 +27,7 @@ const mockMessage: Message = {
   status: "SENT",
   isDeleted: false,
   isEdited: false,
+  isAI: false,
   reactions: [],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -196,6 +197,87 @@ describe("MessageBubble status indicator", () => {
     );
     expect(container.querySelector("svg.lucide-check")).toBeNull();
     expect(container.querySelector("svg.lucide-check-check")).toBeNull();
+  });
+});
+
+describe("MessageBubble — AI messages", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setupMocks();
+    vi.mocked(useToggleReaction).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useToggleReaction>);
+  });
+
+  it("renders purple AI bubble with 🤖 AI Assistant label when isAI is true", () => {
+    const aiMessage: Message = {
+      ...mockMessage,
+      isAI: true,
+      toolUsed: "get_weather",
+    };
+    renderWithIntl(
+      <MessageBubble
+        message={aiMessage}
+        isMine={false}
+        conversationId="conv-1"
+        participants={[]}
+      />,
+    );
+    expect(screen.getByText("🤖 AI Assistant")).toBeTruthy();
+    expect(screen.getByText(aiMessage.content)).toBeTruthy();
+  });
+
+  it("renders tool badge for get_weather", () => {
+    const aiMessage: Message = {
+      ...mockMessage,
+      isAI: true,
+      toolUsed: "get_weather",
+    };
+    renderWithIntl(
+      <MessageBubble
+        message={aiMessage}
+        isMine={false}
+        conversationId="conv-1"
+        participants={[]}
+      />,
+    );
+    expect(screen.getByText("🌤️ Weather")).toBeTruthy();
+  });
+
+  it("renders tool badge for web_search", () => {
+    const aiMessage: Message = {
+      ...mockMessage,
+      isAI: true,
+      toolUsed: "web_search",
+    };
+    renderWithIntl(
+      <MessageBubble
+        message={aiMessage}
+        isMine={false}
+        conversationId="conv-1"
+        participants={[]}
+      />,
+    );
+    expect(screen.getByText("🔍 Web search")).toBeTruthy();
+  });
+
+  it("does not render edit or delete controls for AI messages", () => {
+    const aiMessage: Message = {
+      ...mockMessage,
+      isAI: true,
+      toolUsed: "direct",
+    };
+    renderWithIntl(
+      <MessageBubble
+        message={aiMessage}
+        isMine={true}
+        conversationId="conv-1"
+        participants={[]}
+      />,
+    );
+    expect(screen.queryByText("Edit")).toBeNull();
+    expect(screen.queryByText("Delete")).toBeNull();
   });
 });
 

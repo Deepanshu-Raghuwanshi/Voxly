@@ -13,6 +13,9 @@ export interface CreateMessageInput {
   content: string;
   type: string;
   replyTo?: ReplyToInput;
+  isAI?: boolean;
+  toolUsed?: string;
+  agentQuery?: string;
 }
 
 export interface UpdateMessageInput {

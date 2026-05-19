@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { chatService } from "../services/chat.service";
 import {
@@ -107,6 +108,7 @@ export const useSendMessage = (conversationId: string) => {
         status: "SENT",
         isDeleted: false,
         isEdited: false,
+        isAI: false,
         reactions: [],
         replyTo: replyTarget
           ? {
@@ -403,6 +405,107 @@ export const useSummarizeConversation = (conversationId: string) => {
       if (axios.isAxiosError(err) && err.response?.status === 429) {
         showToast.error(t("summarize_rate_limited"));
       }
+    },
+  });
+};
+
+export const useAiAgent = (conversationId: string) => {
+  const queryClient = useQueryClient();
+  const setDraft = useChatStore((state) => state.setDraft);
+  const setAgentThinking = useChatStore((state) => state.setAgentThinking);
+  const t = useTranslations("features.chat.errors");
+
+  return useMutation({
+    mutationFn: (message: string) =>
+      chatService.triggerAiAgent({ conversationId, message }),
+
+    onMutate: () => {
+      setAgentThinking(conversationId, true);
+    },
+
+    onSettled: () => {
+      setAgentThinking(conversationId, false);
+    },
+
+    onSuccess: ({ message: aiMessage }) => {
+      setDraft(conversationId, "");
+
+      queryClient.setQueryData<InfiniteData<MessageListResponse>>(
+        ["messages", conversationId],
+        (old) => {
+          if (!old) return old;
+          const alreadyExists = old.pages.some((p) =>
+            p.data?.some((m) => m.id === aiMessage.id),
+          );
+          if (alreadyExists) return old;
+          const newPages = [...old.pages];
+          newPages[0] = {
+            ...newPages[0],
+            data: [aiMessage, ...newPages[0].data],
+          };
+          return { ...old, pages: newPages };
+        },
+      );
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+
+    onError: (err) => {
+      if (!axios.isAxiosError(err)) {
+        showToast.error(t("agent_unavailable"));
+        return;
+      }
+
+      const status = err.response?.status;
+      const data = err.response?.data as Record<string, unknown> | undefined;
+      // Global exception filter maps the payload to { statusCode, error, message, ... }
+      const msg = ((data?.error ?? data?.message) as string | undefined) ?? "";
+
+      if (status === 429) {
+        toast(msg || t("agent_rate_limited"), {
+          position: "bottom-center",
+          style: { background: "#f59e0b", color: "#fff" },
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Blocked / guard-rail responses (400): inject as a fake AI message so the
+      // user sees the reply inline rather than a generic error toast.
+      if (status === 400 && msg) {
+        const userId = useAuthStore.getState().user?.id;
+        if (userId) {
+          const blockedReply: Message = {
+            id: crypto.randomUUID(),
+            conversationId,
+            senderId: userId,
+            content: msg,
+            type: "TEXT",
+            status: "SENT",
+            isDeleted: false,
+            isEdited: false,
+            isAI: true,
+            toolUsed: "direct",
+            reactions: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          queryClient.setQueryData<InfiniteData<MessageListResponse>>(
+            ["messages", conversationId],
+            (old) => {
+              if (!old) return old;
+              const newPages = [...old.pages];
+              newPages[0] = {
+                ...newPages[0],
+                data: [blockedReply, ...newPages[0].data],
+              };
+              return { ...old, pages: newPages };
+            },
+          );
+        }
+        return;
+      }
+
+      showToast.error(t("agent_unavailable"));
     },
   });
 };

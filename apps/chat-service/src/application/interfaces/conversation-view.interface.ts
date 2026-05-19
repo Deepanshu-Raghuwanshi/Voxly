@@ -19,6 +19,8 @@ export interface MessageView {
   status: string;
   isDeleted: boolean;
   isEdited?: boolean;
+  isAI: boolean;
+  toolUsed?: string | null;
   reactions: ReactionView[];
   replyTo?: ReplyToView;
   createdAt: string;

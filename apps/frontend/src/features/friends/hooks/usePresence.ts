@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { UserProfile } from "../services/friends.service";
-import { Message, MessageListResponse } from "@shared-types";
+import { Message, MessageListResponse, Reaction } from "@shared-types";
 import { InfiniteData } from "@tanstack/react-query";
 import { io, Socket } from "socket.io-client";
 import { chatService } from "../../chat/services/chat.service";
@@ -71,6 +71,23 @@ interface TypingStoppedPayload {
   userId: string;
 }
 
+interface AiMessageNewPayload {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  type: string;
+  status: string;
+  isDeleted: boolean;
+  isEdited: boolean;
+  isAI: boolean;
+  toolUsed?: string | null;
+  agentQuery?: string | null;
+  reactions: Reaction[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 let socket: Socket | null = null;
 
 export const joinConversationRoom = (conversationId: string) => {
@@ -137,6 +154,7 @@ export const usePresence = () => {
           status: "SENT",
           isDeleted: false,
           isEdited: false,
+          isAI: false,
           reactions: [],
           replyTo: data.replyTo,
           createdAt: data.sentAt,
@@ -323,6 +341,56 @@ export const usePresence = () => {
         useChatStore
           .getState()
           .setTyping(data.conversationId, data.userId, false);
+      });
+
+      socket.on("ai.message.new", (data: AiMessageNewPayload) => {
+        const aiMessage: Message = {
+          id: data.id,
+          conversationId: data.conversationId,
+          senderId: data.senderId,
+          content: data.content,
+          type: data.type as "TEXT",
+          status: data.status as "SENT",
+          isDeleted: false,
+          isEdited: false,
+          isAI: data.isAI,
+          toolUsed:
+            data.toolUsed != null
+              ? (data.toolUsed as Message["toolUsed"])
+              : undefined,
+          reactions: [],
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        };
+
+        queryClient.setQueryData<InfiniteData<MessageListResponse>>(
+          ["messages", data.conversationId],
+          (old) => {
+            if (!old || !old.pages.length) {
+              return {
+                pages: [
+                  {
+                    data: [aiMessage],
+                    hasMore: false,
+                    nextCursor: undefined,
+                  },
+                ],
+                pageParams: [undefined],
+              };
+            }
+            const alreadyExists = old.pages.some((page) =>
+              page.data?.some((msg) => msg.id === aiMessage.id),
+            );
+            if (alreadyExists) return old;
+            const newPages = [...old.pages];
+            newPages[0] = {
+              ...newPages[0],
+              data: [aiMessage, ...(newPages[0].data ?? [])],
+            };
+            return { ...old, pages: newPages };
+          },
+        );
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
       });
     }
 

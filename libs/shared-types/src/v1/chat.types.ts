@@ -4,1074 +4,1228 @@
  */
 
 export interface paths {
-    "/api/v1/chat/conversations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List or search conversations
-         * @description Without `q`: returns cursor-paginated conversations ordered by most recent activity. With `q`: searches ALL conversations across history by the other participant's username or full name. Returns up to 50 matches ordered by most recent activity. `limit` and `before` are ignored in search mode.
-         */
-        get: {
-            parameters: {
-                query?: {
-                    /** @description Search term — filters by the other participant's username or full name (case-insensitive, minimum 1 character). When present activates search mode; pagination params are ignored. */
-                    q?: string;
-                    limit?: number;
-                    /** @description Return conversations whose last message was older than this conversation ID (cursor) */
-                    before?: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Paginated list of conversations */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ConversationListResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        /**
-         * Create or retrieve a conversation
-         * @description Creates a new direct-message conversation with a friend, or returns the existing one. Both users must be friends.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["CreateConversationDto"];
-                };
-            };
-            responses: {
-                /** @description Existing conversation returned */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Conversation"];
-                    };
-                };
-                /** @description New conversation created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Conversation"];
-                    };
-                };
-                /** @description Invalid request (e.g. targetUserId is the requester's own ID) */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Users are not friends */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Target user not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+  "/api/v1/chat/conversations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/chat/conversations/{conversationId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /**
+     * List or search conversations
+     * @description Without `q`: returns cursor-paginated conversations ordered by most recent activity. With `q`: searches ALL conversations across history by the other participant's username or full name. Returns up to 50 matches ordered by most recent activity. `limit` and `before` are ignored in search mode.
+     */
+    get: {
+      parameters: {
+        query?: {
+          /** @description Search term — filters by the other participant's username or full name (case-insensitive, minimum 1 character). When present activates search mode; pagination params are ignored. */
+          q?: string;
+          limit?: number;
+          /** @description Return conversations whose last message was older than this conversation ID (cursor) */
+          before?: string;
         };
-        /** Get a conversation by ID */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    conversationId: components["parameters"]["conversationId"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Conversation details */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Conversation"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Authenticated user is not a participant */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Conversation not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Paginated list of conversations */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ConversationListResponse"];
+          };
         };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
     };
-    "/api/v1/chat/conversations/{conversationId}/messages": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    put?: never;
+    /**
+     * Create or retrieve a conversation
+     * @description Creates a new direct-message conversation with a friend, or returns the existing one. Both users must be friends.
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["CreateConversationDto"];
         };
-        /**
-         * Get messages in a conversation
-         * @description Returns messages in reverse-chronological order (newest first). Pass `before` cursor for pagination.
-         */
-        get: {
-            parameters: {
-                query?: {
-                    limit?: number;
-                    /** @description Return messages sent before this message ID (cursor-based pagination) */
-                    before?: string;
-                };
-                header?: never;
-                path: {
-                    conversationId: components["parameters"]["conversationId"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Paginated list of messages */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["MessageListResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Authenticated user is not a participant */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Conversation not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
+      };
+      responses: {
+        /** @description Existing conversation returned */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Conversation"];
+          };
         };
-        put?: never;
-        /** Send a message */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    conversationId: components["parameters"]["conversationId"];
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["SendMessageDto"];
-                };
-            };
-            responses: {
-                /** @description Message sent */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Message"];
-                    };
-                };
-                /** @description Invalid request (e.g. empty content) */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Authenticated user is not a participant */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Conversation not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
+        /** @description New conversation created */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Conversation"];
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        /** @description Invalid request (e.g. targetUserId is the requester's own ID) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Users are not friends */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Target user not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
     };
-    "/api/v1/chat/conversations/{conversationId}/messages/{messageId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /**
-         * Delete a message
-         * @description Only the original sender may delete their message. Soft-deletes — content is replaced with a tombstone marker.
-         */
-        delete: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    conversationId: components["parameters"]["conversationId"];
-                    messageId: components["parameters"]["messageId"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Message deleted (tombstoned) */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Message"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Authenticated user did not send this message */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Conversation or message not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
-        options?: never;
-        head?: never;
-        /**
-         * Edit a message
-         * @description Only the original sender may edit their message.
-         */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    conversationId: components["parameters"]["conversationId"];
-                    messageId: components["parameters"]["messageId"];
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["EditMessageDto"];
-                };
-            };
-            responses: {
-                /** @description Updated message */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Message"];
-                    };
-                };
-                /** @description Invalid request (e.g. empty content) */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Authenticated user did not send this message */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Conversation or message not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/chat/conversations/{conversationId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/chat/conversations/{conversationId}/messages/{messageId}/reactions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /** Get a conversation by ID */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          conversationId: components["parameters"]["conversationId"];
         };
-        get?: never;
-        put?: never;
-        /**
-         * Toggle a reaction on a message
-         * @description Adds the given emoji reaction for the authenticated user if it does not already exist; removes it if it does. Idempotent toggle — calling twice returns to the original state. Both participants of the conversation may react. Deleted messages cannot be reacted to.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    conversationId: components["parameters"]["conversationId"];
-                    messageId: components["parameters"]["messageId"];
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["ToggleReactionDto"];
-                };
-            };
-            responses: {
-                /** @description Updated message with current reactions */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Message"];
-                    };
-                };
-                /** @description Invalid emoji or message is deleted */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Authenticated user is not a participant */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Conversation or message not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Conversation details */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Conversation"];
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Authenticated user is not a participant */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Conversation not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
     };
-    "/api/v1/chat/conversations/{conversationId}/read": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Mark conversation as read
-         * @description Advances the read cursor for the authenticated user to the latest message.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    conversationId: components["parameters"]["conversationId"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Read cursor updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** Format: date-time */
-                            lastReadAt: string;
-                        };
-                    };
-                };
-                /** @description Invalid request */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Authenticated user is not a participant */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Conversation not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/chat/conversations/{conversationId}/messages": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/chat/ai/smart-replies": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /**
+     * Get messages in a conversation
+     * @description Returns messages in reverse-chronological order (newest first). Pass `before` cursor for pagination.
+     */
+    get: {
+      parameters: {
+        query?: {
+          limit?: number;
+          /** @description Return messages sent before this message ID (cursor-based pagination) */
+          before?: string;
         };
-        get?: never;
-        put?: never;
-        /**
-         * Generate 3 smart reply suggestions for the last received message
-         * @description Accepts the last 1–10 messages of a conversation (oldest first) with role labels ("me" / "them") and returns exactly 3 short, natural reply suggestions from "me"'s perspective. Nothing is persisted. Rate-limited to 15 requests per minute per user. The frontend is responsible for passing context; the backend never reads the database for this endpoint.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["AiSmartReplyDto"];
-                };
-            };
-            responses: {
-                /** @description Three suggested reply strings */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["AiSmartReplyResponse"];
-                    };
-                };
-                /** @description Invalid request (empty messages array, invalid role, content too long) */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded (15 RPM per user) */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description AI provider unavailable or timed out */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
+        header?: never;
+        path: {
+          conversationId: components["parameters"]["conversationId"];
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Paginated list of messages */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["MessageListResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Authenticated user is not a participant */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Conversation not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
     };
-    "/api/v1/chat/ai/summarize": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    put?: never;
+    /** Send a message */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          conversationId: components["parameters"]["conversationId"];
         };
-        get?: never;
-        put?: never;
-        /**
-         * Summarize the recent message history of a conversation
-         * @description Fetches the last N non-deleted messages of the conversation from the database, formats them as a conversation transcript, sends to the AI provider, and returns a bullet-point summary. Nothing is persisted. The request body only needs the conversationId; the backend handles the DB read and participant authorization. Rate-limited to 15 requests per minute per user.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["AiSummarizeDto"];
-                };
-            };
-            responses: {
-                /** @description Bullet-point summary of the conversation */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["AiSummarizeResponse"];
-                    };
-                };
-                /** @description No messages to summarize (conversation is empty or all messages are deleted) */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Authenticated user is not a participant in this conversation */
-                403: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Conversation not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded (15 RPM per user) */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description AI provider unavailable or timed out */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["SendMessageDto"];
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
+      responses: {
+        /** @description Message sent */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Message"];
+          };
+        };
+        /** @description Invalid request (e.g. empty content) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Authenticated user is not a participant */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Conversation not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
     };
-    "/api/v1/chat/ai/rewrite": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Rewrite a draft message using AI
-         * @description Accepts a draft message and a rewrite tone, calls the Gemini AI API on the backend, and returns the rewritten text. The API key is stored server-side; nothing is persisted. Rate-limited to 15 requests per minute per user.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["AiRewriteDto"];
-                };
-            };
-            responses: {
-                /** @description Rewritten text */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["AiRewriteResponse"];
-                    };
-                };
-                /** @description Invalid request (e.g. empty text, unknown tone) */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Rate limit exceeded (15 RPM per user) */
-                429: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description AI provider unavailable or API key not configured */
-                503: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/chat/conversations/{conversationId}/messages/{messageId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    get?: never;
+    put?: never;
+    post?: never;
+    /**
+     * Delete a message
+     * @description Only the original sender may delete their message. Soft-deletes — content is replaced with a tombstone marker.
+     */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          conversationId: components["parameters"]["conversationId"];
+          messageId: components["parameters"]["messageId"];
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Message deleted (tombstoned) */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Message"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Authenticated user did not send this message */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Conversation or message not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    /**
+     * Edit a message
+     * @description Only the original sender may edit their message.
+     */
+    patch: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          conversationId: components["parameters"]["conversationId"];
+          messageId: components["parameters"]["messageId"];
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["EditMessageDto"];
+        };
+      };
+      responses: {
+        /** @description Updated message */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Message"];
+          };
+        };
+        /** @description Invalid request (e.g. empty content) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Authenticated user did not send this message */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Conversation or message not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
+    };
+    trace?: never;
+  };
+  "/api/v1/chat/conversations/{conversationId}/messages/{messageId}/reactions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Toggle a reaction on a message
+     * @description Adds the given emoji reaction for the authenticated user if it does not already exist; removes it if it does. Idempotent toggle — calling twice returns to the original state. Both participants of the conversation may react. Deleted messages cannot be reacted to.
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          conversationId: components["parameters"]["conversationId"];
+          messageId: components["parameters"]["messageId"];
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["ToggleReactionDto"];
+        };
+      };
+      responses: {
+        /** @description Updated message with current reactions */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["Message"];
+          };
+        };
+        /** @description Invalid emoji or message is deleted */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Authenticated user is not a participant */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Conversation or message not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/chat/conversations/{conversationId}/read": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Mark conversation as read
+     * @description Advances the read cursor for the authenticated user to the latest message.
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          conversationId: components["parameters"]["conversationId"];
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Read cursor updated */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              /** Format: date-time */
+              lastReadAt: string;
+            };
+          };
+        };
+        /** @description Invalid request */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Authenticated user is not a participant */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Conversation not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/chat/ai/agent": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Route an @AI-prefixed message to the AI agent
+     * @description Accepts a message that starts with "@AI" and routes it to an AI agent capable of calling tools (web search, weather, URL summarizer, translate). The agent validates the query, applies per-user rate limiting (1 call per 10 seconds), runs a two-turn LLM loop, saves the AI reply to the database, and broadcasts it to the conversation room via Socket.IO.
+     *     Returns the saved AI message on success. Returns a blocked response (400) when the query matches a prohibited pattern, or a rate-limit response (429) when the caller exceeds 1 call per 10 seconds.
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["AiAgentDto"];
+        };
+      };
+      responses: {
+        /** @description AI reply saved and broadcast to the conversation room */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["AiAgentResponse"];
+          };
+        };
+        /** @description Empty query after stripping @AI prefix, OR query matched a blocked pattern (injection attempt, credential request, code generation, identity question, or message exceeds 500 characters). Check `blocked` field to distinguish from a validation error. */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["AiAgentBlockedResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Authenticated user is not a participant in this conversation */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Conversation not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Rate limit exceeded — user made more than 1 agent call in the last 10 seconds */
+        429: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["AiAgentRateLimitedResponse"];
+          };
+        };
+        /** @description Groq LLM or a required tool API is unavailable */
+        503: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/chat/ai/smart-replies": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Generate 3 smart reply suggestions for the last received message
+     * @description Accepts the last 1–10 messages of a conversation (oldest first) with role labels ("me" / "them") and returns exactly 3 short, natural reply suggestions from "me"'s perspective. Nothing is persisted. Rate-limited to 15 requests per minute per user. The frontend is responsible for passing context; the backend never reads the database for this endpoint.
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["AiSmartReplyDto"];
+        };
+      };
+      responses: {
+        /** @description Three suggested reply strings */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["AiSmartReplyResponse"];
+          };
+        };
+        /** @description Invalid request (empty messages array, invalid role, content too long) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Rate limit exceeded (15 RPM per user) */
+        429: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description AI provider unavailable or timed out */
+        503: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/chat/ai/summarize": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Summarize the recent message history of a conversation
+     * @description Fetches the last N non-deleted messages of the conversation from the database, formats them as a conversation transcript, sends to the AI provider, and returns a bullet-point summary. Nothing is persisted. The request body only needs the conversationId; the backend handles the DB read and participant authorization. Rate-limited to 15 requests per minute per user.
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["AiSummarizeDto"];
+        };
+      };
+      responses: {
+        /** @description Bullet-point summary of the conversation */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["AiSummarizeResponse"];
+          };
+        };
+        /** @description No messages to summarize (conversation is empty or all messages are deleted) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Authenticated user is not a participant in this conversation */
+        403: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Conversation not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Rate limit exceeded (15 RPM per user) */
+        429: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description AI provider unavailable or timed out */
+        503: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/chat/ai/rewrite": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Rewrite a draft message using AI
+     * @description Accepts a draft message and a rewrite tone, calls the Gemini AI API on the backend, and returns the rewritten text. The API key is stored server-side; nothing is persisted. Rate-limited to 15 requests per minute per user.
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["AiRewriteDto"];
+        };
+      };
+      responses: {
+        /** @description Rewritten text */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["AiRewriteResponse"];
+          };
+        };
+        /** @description Invalid request (e.g. empty text, unknown tone) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Rate limit exceeded (15 RPM per user) */
+        429: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description AI provider unavailable or API key not configured */
+        503: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        ErrorResponse: {
-            statusCode: number;
-            /** Format: date-time */
-            timestamp: string;
-            path: string;
-            method: string;
-            error: string;
-            message: string;
-        };
-        ConversationParticipant: {
-            /** Format: uuid */
-            userId: string;
-            username: string;
-            fullName?: string;
-            avatarUrl?: string;
-            isOnline?: boolean;
-            /** Format: date-time */
-            lastReadAt?: string;
-        };
-        Conversation: {
-            /** Format: uuid */
-            id: string;
-            participants: components["schemas"]["ConversationParticipant"][];
-            lastMessage?: components["schemas"]["Message"];
-            unreadCount?: number;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        ConversationListResponse: {
-            data: components["schemas"]["Conversation"][];
-            hasMore: boolean;
-            /**
-             * Format: uuid
-             * @description ID of the oldest conversation in this page; pass as `before` to fetch older conversations
-             */
-            nextCursor?: string;
-        };
-        Message: {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            conversationId: string;
-            /** Format: uuid */
-            senderId: string;
-            content: string;
-            /** @enum {string} */
-            type: "TEXT";
-            /** @enum {string} */
-            status: "SENT" | "DELIVERED" | "READ";
-            isDeleted: boolean;
-            isEdited?: boolean;
-            /** @description Present when this message is a quoted reply. Contains a snapshot of the original message. */
-            replyTo?: components["schemas"]["QuotedMessage"];
-            /** @default [] */
-            reactions: components["schemas"]["Reaction"][];
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        Reaction: {
-            /** @description A single emoji character or ZWJ sequence (e.g. "👍", "❤️", "👨‍👩‍👧") */
-            emoji: string;
-            /**
-             * Format: uuid
-             * @description The user who added this reaction
-             */
-            userId: string;
-            /** Format: date-time */
-            createdAt: string;
-        };
-        ToggleReactionDto: {
-            /** @description Emoji to toggle. Adding the same emoji again removes it. */
-            emoji: string;
-        };
-        MessageListResponse: {
-            data: components["schemas"]["Message"][];
-            hasMore: boolean;
-            /**
-             * Format: uuid
-             * @description ID of the oldest message in this page; pass as `before` to fetch older messages
-             */
-            nextCursor?: string;
-        };
-        CreateConversationDto: {
-            /**
-             * Format: uuid
-             * @description UUID of the friend to start a conversation with
-             */
-            targetUserId: string;
-            /** @description Display username of the target user (profile hint, avoids a round-trip to user-service) */
-            targetUsername?: string;
-            /** @description Full name of the target user (profile hint) */
-            targetFullName?: string;
-            /** @description Avatar URL of the target user (profile hint) */
-            targetAvatarUrl?: string;
-            /** @description Display username of the requesting user (profile hint) */
-            callerUsername?: string;
-            /** @description Full name of the requesting user (profile hint) */
-            callerFullName?: string;
-            /** @description Avatar URL of the requesting user (profile hint) */
-            callerAvatarUrl?: string;
-        };
-        QuotedMessage: {
-            /**
-             * Format: uuid
-             * @description ID of the original message being quoted
-             */
-            messageId: string;
-            /**
-             * Format: uuid
-             * @description User ID of the original message's author
-             */
-            senderId: string;
-            /** @description Snapshot of the original message content at reply time (truncated to 200 chars) */
-            content: string;
-        };
-        SendMessageDto: {
-            content: string;
-            /**
-             * @default TEXT
-             * @enum {string}
-             */
-            type: "TEXT";
-            /**
-             * Format: uuid
-             * @description ID of the message being replied to. When provided, the backend fetches the original message and embeds a snapshot in the new message's replyTo field.
-             */
-            quotedMessageId?: string;
-        };
-        MessageContextItem: {
-            /**
-             * @description "me" = the current user (the one who will send the smart reply). "them" = the other participant (the one whose last message is being replied to).
-             * @enum {string}
-             */
-            role: "me" | "them";
-            /** @description Message text. Truncated to 500 chars by the client before sending. */
-            content: string;
-        };
-        AiSmartReplyDto: {
-            /** @description Conversation context — last 1 to 10 messages, oldest first. Deleted messages must be excluded by the client before sending. The last item must always have role "them" (the message being replied to). */
-            messages: components["schemas"]["MessageContextItem"][];
-        };
-        AiSmartReplyResponse: {
-            /** @description Exactly 3 short reply suggestions, each 3–10 words. */
-            suggestions: string[];
-        };
-        AiRewriteDto: {
-            /** @description The draft message text to rewrite. Stripped of leading/trailing whitespace before being sent to the AI provider. */
-            text: string;
-            /**
-             * @description fix-grammar — correct typos, grammar, and punctuation only. professional — rewrite as formal business language. casual — rewrite as relaxed, conversational language. shorter — condense to essential meaning. longer — expand with additional context and detail.
-             * @enum {string}
-             */
-            tone: "fix-grammar" | "professional" | "casual" | "shorter" | "longer";
-        };
-        AiRewriteResponse: {
-            /** @description The AI-rewritten version of the input text. */
-            rewrittenText: string;
-        };
-        EditMessageDto: {
-            content: string;
-        };
-        AiSummarizeDto: {
-            /** @description ID of the conversation to summarize. The backend fetches messages directly from the database; the client does not pass message content. */
-            conversationId: string;
-            /**
-             * @description Number of most-recent non-deleted messages to include in the summary context.
-             * @default 50
-             */
-            limit: number;
-        };
-        AiSummarizeResponse: {
-            /** @description Bullet-point summary of the conversation, formatted as lines starting with "• ". 3–7 bullets for normal conversations; 1–2 bullets for very short ones. */
-            summary: string;
-        };
+  schemas: {
+    ErrorResponse: {
+      statusCode: number;
+      /** Format: date-time */
+      timestamp: string;
+      path: string;
+      method: string;
+      error: string;
+      message: string;
     };
-    responses: never;
-    parameters: {
-        conversationId: string;
-        messageId: string;
+    ConversationParticipant: {
+      /** Format: uuid */
+      userId: string;
+      username: string;
+      fullName?: string;
+      avatarUrl?: string;
+      isOnline?: boolean;
+      /** Format: date-time */
+      lastReadAt?: string;
     };
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    Conversation: {
+      /** Format: uuid */
+      id: string;
+      participants: components["schemas"]["ConversationParticipant"][];
+      lastMessage?: components["schemas"]["Message"];
+      unreadCount?: number;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    ConversationListResponse: {
+      data: components["schemas"]["Conversation"][];
+      hasMore: boolean;
+      /**
+       * Format: uuid
+       * @description ID of the oldest conversation in this page; pass as `before` to fetch older conversations
+       */
+      nextCursor?: string;
+    };
+    Message: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      conversationId: string;
+      /** Format: uuid */
+      senderId: string;
+      content: string;
+      /** @enum {string} */
+      type: "TEXT";
+      /** @enum {string} */
+      status: "SENT" | "DELIVERED" | "READ";
+      isDeleted: boolean;
+      isEdited?: boolean;
+      /**
+       * @description True when this message was generated by the AI agent, not typed by a human.
+       * @default false
+       */
+      isAI: boolean;
+      /**
+       * @description Which agent tool was invoked to produce this reply. Null for human messages.
+       * @enum {string|null}
+       */
+      toolUsed?:
+        | "web_search"
+        | "get_weather"
+        | "summarize_url"
+        | "translate"
+        | "direct"
+        | null;
+      /** @description The original user query that triggered the agent (with @AI prefix stripped). Null for human messages. */
+      agentQuery?: string | null;
+      /** @description Present when this message is a quoted reply. Contains a snapshot of the original message. */
+      replyTo?: components["schemas"]["QuotedMessage"];
+      /** @default [] */
+      reactions: components["schemas"]["Reaction"][];
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    Reaction: {
+      /** @description A single emoji character or ZWJ sequence (e.g. "👍", "❤️", "👨‍👩‍👧") */
+      emoji: string;
+      /**
+       * Format: uuid
+       * @description The user who added this reaction
+       */
+      userId: string;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    ToggleReactionDto: {
+      /** @description Emoji to toggle. Adding the same emoji again removes it. */
+      emoji: string;
+    };
+    MessageListResponse: {
+      data: components["schemas"]["Message"][];
+      hasMore: boolean;
+      /**
+       * Format: uuid
+       * @description ID of the oldest message in this page; pass as `before` to fetch older messages
+       */
+      nextCursor?: string;
+    };
+    CreateConversationDto: {
+      /**
+       * Format: uuid
+       * @description UUID of the friend to start a conversation with
+       */
+      targetUserId: string;
+      /** @description Display username of the target user (profile hint, avoids a round-trip to user-service) */
+      targetUsername?: string;
+      /** @description Full name of the target user (profile hint) */
+      targetFullName?: string;
+      /** @description Avatar URL of the target user (profile hint) */
+      targetAvatarUrl?: string;
+      /** @description Display username of the requesting user (profile hint) */
+      callerUsername?: string;
+      /** @description Full name of the requesting user (profile hint) */
+      callerFullName?: string;
+      /** @description Avatar URL of the requesting user (profile hint) */
+      callerAvatarUrl?: string;
+    };
+    QuotedMessage: {
+      /**
+       * Format: uuid
+       * @description ID of the original message being quoted
+       */
+      messageId: string;
+      /**
+       * Format: uuid
+       * @description User ID of the original message's author
+       */
+      senderId: string;
+      /** @description Snapshot of the original message content at reply time (truncated to 200 chars) */
+      content: string;
+    };
+    SendMessageDto: {
+      content: string;
+      /**
+       * @default TEXT
+       * @enum {string}
+       */
+      type: "TEXT";
+      /**
+       * Format: uuid
+       * @description ID of the message being replied to. When provided, the backend fetches the original message and embeds a snapshot in the new message's replyTo field.
+       */
+      quotedMessageId?: string;
+    };
+    MessageContextItem: {
+      /**
+       * @description "me" = the current user (the one who will send the smart reply). "them" = the other participant (the one whose last message is being replied to).
+       * @enum {string}
+       */
+      role: "me" | "them";
+      /** @description Message text. Truncated to 500 chars by the client before sending. */
+      content: string;
+    };
+    AiSmartReplyDto: {
+      /** @description Conversation context — last 1 to 10 messages, oldest first. Deleted messages must be excluded by the client before sending. The last item must always have role "them" (the message being replied to). */
+      messages: components["schemas"]["MessageContextItem"][];
+    };
+    AiSmartReplyResponse: {
+      /** @description Exactly 3 short reply suggestions, each 3–10 words. */
+      suggestions: string[];
+    };
+    AiRewriteDto: {
+      /** @description The draft message text to rewrite. Stripped of leading/trailing whitespace before being sent to the AI provider. */
+      text: string;
+      /**
+       * @description fix-grammar — correct typos, grammar, and punctuation only. professional — rewrite as formal business language. casual — rewrite as relaxed, conversational language. shorter — condense to essential meaning. longer — expand with additional context and detail.
+       * @enum {string}
+       */
+      tone: "fix-grammar" | "professional" | "casual" | "shorter" | "longer";
+    };
+    AiRewriteResponse: {
+      /** @description The AI-rewritten version of the input text. */
+      rewrittenText: string;
+    };
+    EditMessageDto: {
+      content: string;
+    };
+    AiSummarizeDto: {
+      /** @description ID of the conversation to summarize. The backend fetches messages directly from the database; the client does not pass message content. */
+      conversationId: string;
+      /**
+       * @description Number of most-recent non-deleted messages to include in the summary context.
+       * @default 50
+       */
+      limit: number;
+    };
+    AiSummarizeResponse: {
+      /** @description Bullet-point summary of the conversation, formatted as lines starting with "• ". 3–7 bullets for normal conversations; 1–2 bullets for very short ones. */
+      summary: string;
+    };
+    AiAgentDto: {
+      /**
+       * Format: uuid
+       * @description The conversation to post the AI reply into and fetch context from.
+       */
+      conversationId: string;
+      /** @description The full user message starting with "@AI" (case-insensitive). Backend strips the prefix and normalises unicode before processing. */
+      message: string;
+    };
+    AiAgentResponse: {
+      /** @description The saved AI reply with isAI=true and toolUsed set. */
+      message: components["schemas"]["Message"];
+    };
+    AiAgentBlockedResponse: {
+      /** @description Always true — discriminator field for the frontend. */
+      blocked: boolean;
+      /**
+       * @description Which blocked-pattern category matched.
+       * @enum {string}
+       */
+      category:
+        | "injection"
+        | "credentials"
+        | "codeGen"
+        | "identity"
+        | "too_long"
+        | "empty";
+      /** @description Human-readable explanation to show in a toast. */
+      message: string;
+    };
+    AiAgentRateLimitedResponse: {
+      /** @description Always true — discriminator field for the frontend. */
+      rateLimited: boolean;
+      /** @description Seconds until the user may make another agent call. */
+      secondsRemaining: number;
+      /** @description Human-readable message to show in a toast (e.g. "Slow down! Try again in 7 seconds ⏳"). */
+      message: string;
+    };
+  };
+  responses: never;
+  parameters: {
+    conversationId: string;
+    messageId: string;
+  };
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export type operations = Record<string, never>;

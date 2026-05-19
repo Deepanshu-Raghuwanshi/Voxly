@@ -62,6 +62,7 @@ function makeMessage(overrides: Partial<Message>): Message {
     type: "TEXT",
     status: "SENT",
     isDeleted: false,
+    isAI: false,
     reactions: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -294,6 +295,67 @@ describe("usePresence — typing.started / typing.stopped", () => {
     });
 
     expect(setTypingMock).toHaveBeenCalledWith("conv-1", "user-a", false);
+  });
+});
+
+describe("usePresence — ai.message.new", () => {
+  const makeAiPayload = (overrides: Record<string, unknown> = {}) => ({
+    id: "ai-msg-1",
+    conversationId: "conv-1",
+    senderId: "user-a",
+    content: "It's 24°C in Tokyo",
+    type: "TEXT",
+    status: "SENT",
+    isDeleted: false,
+    isEdited: false,
+    isAI: true,
+    toolUsed: "get_weather",
+    reactions: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  });
+
+  it("prepends AI message to the messages cache when cache exists", () => {
+    seedCache([makeMessage({ id: "msg-1" })]);
+
+    act(() => {
+      socketHandlers["ai.message.new"]?.(makeAiPayload());
+    });
+
+    const cache = getCache();
+    expect(cache?.pages[0].data[0].id).toBe("ai-msg-1");
+    expect(cache?.pages[0].data[0].isAI).toBe(true);
+    expect(cache?.pages[0].data[0].toolUsed).toBe("get_weather");
+    expect(cache?.pages[0].data).toHaveLength(2);
+  });
+
+  it("does not insert a duplicate AI message if already present in cache", () => {
+    seedCache([makeMessage({ id: "ai-msg-1", isAI: true })]);
+
+    act(() => {
+      socketHandlers["ai.message.new"]?.(makeAiPayload());
+    });
+
+    expect(getCache()?.pages[0].data).toHaveLength(1);
+  });
+
+  it("seeds a new first page when the messages cache is empty", () => {
+    act(() => {
+      socketHandlers["ai.message.new"]?.(makeAiPayload());
+    });
+
+    const cache = getCache();
+    expect(cache?.pages[0].data[0].id).toBe("ai-msg-1");
+    expect(cache?.pages[0].data[0].isAI).toBe(true);
+  });
+
+  it("maps null toolUsed to undefined on the cached Message", () => {
+    act(() => {
+      socketHandlers["ai.message.new"]?.(makeAiPayload({ toolUsed: null }));
+    });
+
+    expect(getCache()?.pages[0].data[0].toolUsed).toBeUndefined();
   });
 });
 

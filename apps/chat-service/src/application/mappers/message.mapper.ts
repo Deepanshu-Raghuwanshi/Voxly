@@ -11,6 +11,8 @@ export function toMessageView(message: MessageEntity): MessageView {
     status: message.status,
     isDeleted: message.isDeleted,
     isEdited: message.isEdited,
+    isAI: message.isAI,
+    toolUsed: message.toolUsed ?? null,
     reactions: message.reactions.map((r) => ({
       emoji: r.emoji,
       userId: r.userId,

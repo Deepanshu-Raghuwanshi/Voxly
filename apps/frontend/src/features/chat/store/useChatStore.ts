@@ -7,6 +7,7 @@ interface ChatState {
   replyTargets: Record<string, Message | null>;
   highlightedMessageId: string | null;
   typingUsers: Record<string, string[]>;
+  agentThinking: Record<string, boolean>;
   composerFocusTokens: Record<string, number>;
   setActiveConversation: (id: string | null) => void;
   setDraft: (conversationId: string, text: string) => void;
@@ -17,6 +18,7 @@ interface ChatState {
     userId: string,
     isTyping: boolean,
   ) => void;
+  setAgentThinking: (conversationId: string, thinking: boolean) => void;
   requestComposerFocus: (conversationId: string) => void;
 }
 
@@ -26,6 +28,7 @@ export const useChatStore = create<ChatState>((set) => ({
   replyTargets: {},
   highlightedMessageId: null,
   typingUsers: {},
+  agentThinking: {},
   composerFocusTokens: {},
   setActiveConversation: (id) => set({ activeConversationId: id }),
   setDraft: (conversationId, text) =>
@@ -49,6 +52,10 @@ export const useChatStore = create<ChatState>((set) => ({
         typingUsers: { ...state.typingUsers, [conversationId]: updated },
       };
     }),
+  setAgentThinking: (conversationId, thinking) =>
+    set((state) => ({
+      agentThinking: { ...state.agentThinking, [conversationId]: thinking },
+    })),
   requestComposerFocus: (conversationId) =>
     set((state) => ({
       composerFocusTokens: {

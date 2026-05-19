@@ -52,6 +52,9 @@ export class MongooseMessageRepository implements MessageRepository {
       content: data.content,
       type: data.type,
       ...(data.replyTo ? { replyTo: data.replyTo } : {}),
+      isAI: data.isAI ?? false,
+      toolUsed: data.toolUsed ?? null,
+      agentQuery: data.agentQuery ?? null,
     });
     return this.toEntity(doc);
   }
@@ -141,6 +144,9 @@ export class MongooseMessageRepository implements MessageRepository {
       status: doc.status,
       isDeleted: doc.isDeleted,
       isEdited: doc.isEdited,
+      isAI: doc.isAI,
+      toolUsed: doc.toolUsed,
+      agentQuery: doc.agentQuery,
       reactions: (doc.reactions ?? []).map((r) => ({
         emoji: r.emoji,
         userId: r.userId,

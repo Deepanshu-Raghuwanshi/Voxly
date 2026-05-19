@@ -32,6 +32,14 @@ interface MessageBubbleProps {
   participants: ConversationParticipant[];
 }
 
+const TOOL_BADGES: Record<string, string> = {
+  web_search: "🔍 Web search",
+  get_weather: "🌤️ Weather",
+  summarize_url: "🔗 URL summary",
+  translate: "🌐 Translated",
+  direct: "💬 Direct reply",
+};
+
 function formatTime(dateString: string): string {
   return new Date(dateString).toLocaleTimeString([], {
     hour: "2-digit",
@@ -109,6 +117,46 @@ export const MessageBubble = ({
   };
 
   const reactions = message.reactions ?? [];
+
+  if (message.isAI) {
+    return (
+      <div id={`msg-${message.id}`} className="flex mb-2 justify-start">
+        <div className="flex flex-col max-w-xs lg:max-w-md items-start">
+          <div className="flex items-center gap-1.5 mb-1 px-1">
+            <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
+              🤖 AI Assistant
+            </span>
+          </div>
+          <div
+            className={cn(
+              "px-4 py-2 rounded-2xl rounded-bl-sm text-sm leading-relaxed",
+              "bg-violet-100 dark:bg-violet-900/40 text-foreground",
+              "border border-violet-200 dark:border-violet-700 shadow-sm",
+            )}
+          >
+            {message.content}
+          </div>
+          <div className="flex items-center gap-2 mt-1 px-1">
+            <span className="text-xs text-foreground/40">
+              {formatTime(message.createdAt)}
+            </span>
+            {message.toolUsed && (
+              <span
+                className={cn(
+                  "text-xs px-2 py-0.5 rounded-full",
+                  "bg-violet-100 dark:bg-violet-900/30",
+                  "text-violet-600 dark:text-violet-400",
+                  "border border-violet-200 dark:border-violet-700",
+                )}
+              >
+                {TOOL_BADGES[message.toolUsed] ?? message.toolUsed}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (message.isDeleted) {
     return (

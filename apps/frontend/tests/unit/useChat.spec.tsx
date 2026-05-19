@@ -18,6 +18,7 @@ import {
   useRewriteMessage,
   useSmartReplies,
   useSummarizeConversation,
+  useAiAgent,
 } from "../../src/features/chat/hooks/useChat";
 import { showToast } from "../../src/shared/utils/toast";
 import {
@@ -43,7 +44,12 @@ vi.mock("../../src/features/chat/services/chat.service", () => ({
     rewriteMessage: vi.fn(),
     getSmartReplies: vi.fn(),
     summarizeConversation: vi.fn(),
+    triggerAiAgent: vi.fn(),
   },
+}));
+
+vi.mock("sonner", () => ({
+  toast: vi.fn(),
 }));
 
 vi.mock("../../src/shared/utils/toast", () => ({
@@ -99,6 +105,7 @@ const mockMessage: Message = {
   type: "TEXT",
   status: "SENT",
   isDeleted: false,
+  isAI: false,
   reactions: [],
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
@@ -243,6 +250,7 @@ describe("useSendMessage", () => {
       type: "TEXT",
       status: "SENT",
       isDeleted: false,
+      isAI: false,
       reactions: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -366,6 +374,7 @@ describe("useSendMessage", () => {
       type: "TEXT",
       status: "SENT",
       isDeleted: false,
+      isAI: false,
       reactions: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -846,10 +855,9 @@ describe("useSummarizeConversation", () => {
     });
 
     const { Wrapper } = makeWrapper();
-    const { result } = renderHook(
-      () => useSummarizeConversation("conv-1"),
-      { wrapper: Wrapper },
-    );
+    const { result } = renderHook(() => useSummarizeConversation("conv-1"), {
+      wrapper: Wrapper,
+    });
 
     act(() => {
       result.current.mutate(50);
@@ -867,10 +875,9 @@ describe("useSummarizeConversation", () => {
     vi.mocked(chatService.summarizeConversation).mockRejectedValue(error);
 
     const { Wrapper } = makeWrapper();
-    const { result } = renderHook(
-      () => useSummarizeConversation("conv-1"),
-      { wrapper: Wrapper },
-    );
+    const { result } = renderHook(() => useSummarizeConversation("conv-1"), {
+      wrapper: Wrapper,
+    });
 
     act(() => {
       result.current.mutate(50);
@@ -890,10 +897,9 @@ describe("useSummarizeConversation", () => {
     vi.mocked(chatService.summarizeConversation).mockRejectedValue(error);
 
     const { Wrapper } = makeWrapper();
-    const { result } = renderHook(
-      () => useSummarizeConversation("conv-1"),
-      { wrapper: Wrapper },
-    );
+    const { result } = renderHook(() => useSummarizeConversation("conv-1"), {
+      wrapper: Wrapper,
+    });
 
     act(() => {
       result.current.mutate(50);
@@ -901,5 +907,220 @@ describe("useSummarizeConversation", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(vi.mocked(showToast.error)).not.toHaveBeenCalled();
+  });
+});
+
+describe("useAiAgent", () => {
+  const aiMessage: Message = {
+    id: "ai-msg-1",
+    conversationId: "conv-1",
+    senderId: "user-1",
+    content: "In Tokyo it's 24°C",
+    type: "TEXT",
+    status: "SENT",
+    isDeleted: false,
+    isEdited: false,
+    isAI: true,
+    toolUsed: "get_weather",
+    reactions: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    useChatStore.setState({
+      draftMessages: { "conv-1": "@AI weather in Tokyo" },
+    });
+  });
+
+  it("clears draft and inserts message into query cache on success", async () => {
+    vi.mocked(chatService.triggerAiAgent).mockResolvedValue({
+      message: aiMessage,
+    });
+
+    const { queryClient, Wrapper } = makeWrapper();
+    queryClient.setQueryData<InfiniteData<MessageListResponse>>(
+      ["messages", "conv-1"],
+      emptyMessagesCache,
+    );
+
+    const { result } = renderHook(() => useAiAgent("conv-1"), {
+      wrapper: Wrapper,
+    });
+
+    act(() => {
+      result.current.mutate("@AI weather in Tokyo");
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(useChatStore.getState().draftMessages["conv-1"]).toBe("");
+
+    const cached = queryClient.getQueryData<InfiniteData<MessageListResponse>>([
+      "messages",
+      "conv-1",
+    ]);
+    expect(cached?.pages[0].data[0].id).toBe("ai-msg-1");
+    expect(cached?.pages[0].data[0].isAI).toBe(true);
+  });
+
+  it("does not insert duplicate message into cache on success", async () => {
+    vi.mocked(chatService.triggerAiAgent).mockResolvedValue({
+      message: aiMessage,
+    });
+
+    const alreadyCached: InfiniteData<MessageListResponse> = {
+      pages: [{ data: [aiMessage], hasMore: false, nextCursor: undefined }],
+      pageParams: [undefined],
+    };
+
+    const { queryClient, Wrapper } = makeWrapper();
+    queryClient.setQueryData<InfiniteData<MessageListResponse>>(
+      ["messages", "conv-1"],
+      alreadyCached,
+    );
+
+    const { result } = renderHook(() => useAiAgent("conv-1"), {
+      wrapper: Wrapper,
+    });
+
+    act(() => {
+      result.current.mutate("@AI weather in Tokyo");
+    });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    const cached = queryClient.getQueryData<InfiniteData<MessageListResponse>>([
+      "messages",
+      "conv-1",
+    ]);
+    expect(cached?.pages[0].data).toHaveLength(1);
+  });
+
+  it("shows bottom-center amber toast and does NOT clear draft on rateLimited error", async () => {
+    const { toast } = await import("sonner");
+    const error = Object.assign(new Error("Rate limited"), {
+      isAxiosError: true,
+      response: {
+        status: 429,
+        data: {
+          rateLimited: true,
+          secondsRemaining: 7,
+          message: "Slow down! Try again in 7 seconds ⏳",
+        },
+      },
+    });
+    vi.mocked(chatService.triggerAiAgent).mockRejectedValue(error);
+
+    const { Wrapper } = makeWrapper();
+    const { result } = renderHook(() => useAiAgent("conv-1"), {
+      wrapper: Wrapper,
+    });
+
+    act(() => {
+      result.current.mutate("@AI weather in Tokyo");
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(vi.mocked(toast)).toHaveBeenCalledWith(
+      "Slow down! Try again in 7 seconds ⏳",
+      expect.objectContaining({ position: "bottom-center" }),
+    );
+    expect(useChatStore.getState().draftMessages["conv-1"]).toBe(
+      "@AI weather in Tokyo",
+    );
+  });
+
+  it("shows bottom-center red toast on blocked injection error", async () => {
+    const { toast } = await import("sonner");
+    const error = Object.assign(new Error("Blocked"), {
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: {
+          blocked: true,
+          category: "injection",
+          message: "⚠️ That kind of instruction isn't something I can follow.",
+        },
+      },
+    });
+    vi.mocked(chatService.triggerAiAgent).mockRejectedValue(error);
+
+    const { Wrapper } = makeWrapper();
+    const { result } = renderHook(() => useAiAgent("conv-1"), {
+      wrapper: Wrapper,
+    });
+
+    act(() => {
+      result.current.mutate("@AI act as a hacker");
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(vi.mocked(toast)).toHaveBeenCalledWith(
+      "⚠️ That kind of instruction isn't something I can follow.",
+      expect.objectContaining({
+        position: "bottom-center",
+        style: expect.objectContaining({ background: "#ef4444" }),
+      }),
+    );
+  });
+
+  it("shows bottom-center amber toast on blocked codeGen error", async () => {
+    const { toast } = await import("sonner");
+    const error = Object.assign(new Error("Blocked"), {
+      isAxiosError: true,
+      response: {
+        status: 400,
+        data: {
+          blocked: true,
+          category: "codeGen",
+          message: "🛠️ I can't write code.",
+        },
+      },
+    });
+    vi.mocked(chatService.triggerAiAgent).mockRejectedValue(error);
+
+    const { Wrapper } = makeWrapper();
+    const { result } = renderHook(() => useAiAgent("conv-1"), {
+      wrapper: Wrapper,
+    });
+
+    act(() => {
+      result.current.mutate("@AI write code for me");
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(vi.mocked(toast)).toHaveBeenCalledWith(
+      "🛠️ I can't write code.",
+      expect.objectContaining({
+        position: "bottom-center",
+        style: expect.objectContaining({ background: "#f59e0b" }),
+      }),
+    );
+  });
+
+  it("calls showToast.error on a generic (non-axios) error", async () => {
+    vi.mocked(chatService.triggerAiAgent).mockRejectedValue(
+      new Error("Network failure"),
+    );
+
+    const { Wrapper } = makeWrapper();
+    const { result } = renderHook(() => useAiAgent("conv-1"), {
+      wrapper: Wrapper,
+    });
+
+    act(() => {
+      result.current.mutate("@AI weather in Tokyo");
+    });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(vi.mocked(showToast.error)).toHaveBeenCalledWith(
+      "AI is unavailable right now, try again shortly.",
+    );
   });
 });

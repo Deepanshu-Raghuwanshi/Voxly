@@ -21,9 +21,12 @@ import { UserThrottlerGuard } from "../../infrastructure/guards/user-throttler.g
 import { RewriteMessageUseCase } from "../../application/use-cases/rewrite-message.use-case";
 import { GenerateSmartRepliesUseCase } from "../../application/use-cases/generate-smart-replies.use-case";
 import { SummarizeConversationUseCase } from "../../application/use-cases/summarize-conversation.use-case";
+import { RunAiAgentUseCase } from "../../application/use-cases/run-ai-agent.use-case";
 import { AiRewriteDto } from "../../application/dto/ai-rewrite.dto";
 import { AiSmartReplyDto } from "../../application/dto/ai-smart-reply.dto";
 import { AiSummarizeDto } from "../../application/dto/ai-summarize.dto";
+import { AiAgentDto } from "../../application/dto/ai-agent.dto";
+import { MessageView } from "../../application/interfaces/conversation-view.interface";
 
 @ApiTags("AI")
 @ApiBearerAuth()
@@ -35,6 +38,7 @@ export class AiController {
     private readonly rewriteMessage: RewriteMessageUseCase,
     private readonly generateSmartReplies: GenerateSmartRepliesUseCase,
     private readonly summarizeConversation: SummarizeConversationUseCase,
+    private readonly runAiAgent: RunAiAgentUseCase,
   ) {}
 
   @Post("rewrite")
@@ -145,6 +149,40 @@ export class AiController {
       userId: req.user.id,
       conversationId: dto.conversationId,
       limit: dto.limit,
+    });
+  }
+
+  @Post("agent")
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: "Route an @AI-prefixed message to the AI agent" })
+  @ApiBody({ type: AiAgentDto })
+  @ApiResponse({ status: 201, description: "AI reply saved and broadcast" })
+  @ApiResponse({
+    status: 400,
+    description: "Blocked or empty query",
+  })
+  @ApiResponse({ status: 401, description: "Unauthorized" })
+  @ApiResponse({
+    status: 403,
+    description: "Not a participant in this conversation",
+  })
+  @ApiResponse({ status: 404, description: "Conversation not found" })
+  @ApiResponse({
+    status: 429,
+    description: "Rate limit: 1 call per 10 seconds",
+  })
+  @ApiResponse({
+    status: 503,
+    description: "AI provider unavailable",
+  })
+  async runAgent(
+    @Req() req: RequestWithUser,
+    @Body() dto: AiAgentDto,
+  ): Promise<{ message: MessageView }> {
+    return this.runAiAgent.execute({
+      userId: req.user.id,
+      conversationId: dto.conversationId,
+      message: dto.message,
     });
   }
 }

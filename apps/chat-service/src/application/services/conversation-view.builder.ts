@@ -58,6 +58,7 @@ export class ConversationViewBuilder {
             status: "SENT",
             isDeleted: false,
             isEdited: false,
+            isAI: false,
             reactions: [],
             createdAt: snapshot.sentAt.toISOString(),
             updatedAt: snapshot.sentAt.toISOString(),

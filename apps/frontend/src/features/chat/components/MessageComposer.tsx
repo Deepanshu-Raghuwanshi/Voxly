@@ -1,5 +1,6 @@
 "use client";
 
+import { toast } from "sonner";
 import React, {
   useRef,
   useState,
@@ -10,7 +11,11 @@ import React, {
 import { Send, Smile, Reply, X, Sparkles, Loader2 } from "lucide-react";
 import { cn } from "../../../shared/utils/cn";
 import { useTranslations } from "next-intl";
-import { useSendMessage, useRewriteMessage } from "../hooks/useChat";
+import {
+  useSendMessage,
+  useRewriteMessage,
+  useAiAgent,
+} from "../hooks/useChat";
 import { useChatStore } from "../store/useChatStore";
 import { EmojiPickerPopover } from "./EmojiPickerPopover";
 import { AiTonePicker, type RewriteTone } from "./AiTonePicker";
@@ -46,6 +51,9 @@ export const MessageComposer = ({
 
   const { mutate: rewriteMessage, isPending: isRewriting } =
     useRewriteMessage(conversationId);
+
+  const { mutate: triggerAiAgent, isPending: isAgentPending } =
+    useAiAgent(conversationId);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const emojiAreaRef = useRef<HTMLDivElement>(null);
@@ -126,8 +134,22 @@ export const MessageComposer = ({
 
   const handleSend = () => {
     const content = draft.trim();
-    if (!content || isPending) return;
+    if (!content || isPending || isAgentPending) return;
     stopTyping();
+
+    if (content.toLowerCase().startsWith("@ai")) {
+      const query = content.replace(/^@ai\s*/i, "").trim();
+      if (!query) {
+        toast("Add your question after @AI. Example: @AI weather in Tokyo", {
+          position: "bottom-center",
+          duration: 3000,
+        });
+        return;
+      }
+      triggerAiAgent(content);
+      return;
+    }
+
     sendMessage(
       { content, quotedMessageId: replyTarget?.id },
       {
@@ -196,18 +218,40 @@ export const MessageComposer = ({
           </div>
         )}
         <div className="flex items-end gap-2 px-4 py-2">
+          {!draft.trim() && !isAgentPending && (
+            <button
+              type="button"
+              onClick={() => {
+                setDraft(conversationId, "@AI ");
+                requestAnimationFrame(() => {
+                  const el = textareaRef.current;
+                  if (!el) return;
+                  el.focus();
+                  const len = el.value.length;
+                  el.setSelectionRange(len, len);
+                });
+              }}
+              aria-label={t("ai_agent_chip_label")}
+              className="shrink-0 text-xs font-semibold px-2 py-1 rounded-lg border border-violet-300 dark:border-violet-700 text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors"
+            >
+              @AI
+            </button>
+          )}
           <textarea
             ref={textareaRef}
             value={draft}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder={t("placeholder")}
+            placeholder={
+              draft.trim() ? t("placeholder") : t("placeholder_with_ai_hint")
+            }
             rows={1}
-            disabled={isPending || isRewriting}
+            disabled={isPending || isRewriting || isAgentPending}
             className={cn(
               "flex-1 bg-transparent resize-none outline-none text-sm text-foreground",
               "placeholder:text-foreground/40 max-h-30 leading-relaxed py-1 disabled:opacity-50",
               isRewriting && "animate-pulse",
+              isAgentPending && "animate-pulse",
             )}
           />
           <div ref={emojiAreaRef} className="relative shrink-0">
@@ -260,10 +304,10 @@ export const MessageComposer = ({
           )}
           <button
             onClick={handleSend}
-            disabled={!draft.trim() || isPending}
+            disabled={!draft.trim() || isPending || isAgentPending}
             className={cn(
               "shrink-0 p-2 rounded-xl transition-all duration-200",
-              draft.trim() && !isPending
+              draft.trim() && !isPending && !isAgentPending
                 ? "bg-primary text-white hover:bg-primary/90 shadow-sm"
                 : "bg-foreground/10 text-foreground/30 cursor-not-allowed",
             )}
