@@ -14,7 +14,12 @@ export function isProviderRateLimitError(err: unknown): boolean {
 }
 
 export async function runWithFallbackChain<T>(
-  providers: Array<{ name: string; model: string; feature: string; fn: () => Promise<T> }>,
+  providers: Array<{
+    name: string;
+    model: string;
+    feature: string;
+    fn: () => Promise<T>;
+  }>,
   logger: Logger,
 ): Promise<T> {
   for (const provider of providers) {

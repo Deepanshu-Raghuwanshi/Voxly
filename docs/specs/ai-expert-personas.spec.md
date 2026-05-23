@@ -11,6 +11,7 @@ AI Expert Personas is a dedicated `/explore` page where logged-in users can sele
 Verified by reading the following files before writing this spec:
 
 **Backend (chat-service):**
+
 - `apps/chat-service/src/infrastructure/ai/groq-agent.service.ts` — Groq two-turn loop exists, model is `meta-llama/llama-4-scout-17b-16e-instruct`, system prompt and tools are **hardcoded** — cannot accept a custom prompt without a new service.
 - `apps/chat-service/src/infrastructure/ai/tavily-web-search.service.ts` — web search injectable, already registered in `ChatModule`.
 - `apps/chat-service/src/infrastructure/ai/agent-rate-limiter.service.ts` — 10 s cooldown per userId, **no hourly cap**, only `check(userId)` method. Cannot reuse as-is for personas.
@@ -20,20 +21,24 @@ Verified by reading the following files before writing this spec:
 - `apps/chat-service/src/interfaces/controllers/ai.controller.ts` — existing AI routes at `chat/ai/*`. Persona routes will live at `chat/persona/*`.
 
 **API Gateway:**
+
 - `apps/api-gateway/src/interfaces/controllers/gateway.controller.ts` — routes `chat` prefix → `CHAT_SERVICE_URL`. No changes needed; persona URLs at `/api/v1/chat/persona/*` proxy automatically.
 
 **Frontend:**
+
 - `apps/frontend/src/features/chat/` — chat feature with `useChatStore` (Zustand), `useChat.ts` (TQ), `chat.service.ts` (axios). Pattern to replicate for personas.
 - `apps/frontend/src/shared/components/Navbar.tsx` — only has `/chat` and `/friends` nav items. **No `/explore` link exists.**
 - `apps/frontend/app/explore/` — **does not exist**.
 - `apps/frontend/src/features/persona/` — **does not exist**.
 
 **Shared libs:**
+
 - `libs/shared-utils/src/index.ts` — exports `test-constants` and `http`. **No persona constants.**
 - `tsconfig.base.json` — `@shared-utils` path alias confirmed.
 - `libs/shared-types/src/v1/chat.types.ts` — auto-generated from `chat.yaml`. Will include `PersonaChatDto`, `PersonaHistoryResponse`, etc. after Phase 1's `pnpm generate:types`.
 
 **What does NOT exist yet:**
+
 - `PersonaMessage` MongoDB schema + repository
 - `PersonaGroqAgentService` (dynamic system prompt)
 - `PersonaRateLimiterService` (5 s + 20/hr)
@@ -97,11 +102,11 @@ POST /explore → usePersonaChat mutation → apiClient.post('/chat/persona/chat
 
 Editing existing `libs/openapi-specs/src/v1/chat.yaml` (not creating a new file — persona endpoints belong to chat-service which already owns the `chat` YAML).
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| POST | `/api/v1/chat/persona/chat` | JWT | Send a message; run persona agent; persist + return reply |
-| GET | `/api/v1/chat/persona/history/{personaId}` | JWT | Load last 50 messages for user + persona |
-| DELETE | `/api/v1/chat/persona/history/{personaId}` | JWT | Clear history (new conversation) |
+| Method | Path                                       | Auth | Purpose                                                   |
+| ------ | ------------------------------------------ | ---- | --------------------------------------------------------- |
+| POST   | `/api/v1/chat/persona/chat`                | JWT  | Send a message; run persona agent; persist + return reply |
+| GET    | `/api/v1/chat/persona/history/{personaId}` | JWT  | Load last 50 messages for user + persona                  |
+| DELETE | `/api/v1/chat/persona/history/{personaId}` | JWT  | Clear history (new conversation)                          |
 
 ### 1.2 Database Schema Changes
 
@@ -133,7 +138,8 @@ export class PersonaMessage extends Document {
   readonly updatedAt!: Date;
 }
 
-export const PersonaMessageSchema = SchemaFactory.createForClass(PersonaMessage);
+export const PersonaMessageSchema =
+  SchemaFactory.createForClass(PersonaMessage);
 
 // Compound index: all queries filter on userId + personaId + sort by createdAt.
 // -1 on createdAt for "fetch last N" (LIMIT + SORT DESC), flipped to ASC at app layer for display.
@@ -176,7 +182,8 @@ export const PERSONAS: Record<PersonaId, PersonaConfig> = {
     name: "Nova",
     emoji: "🔬",
     role: "Science & Tech Expert",
-    description: "Latest AI research, space exploration, biology, and emerging tech — explained simply.",
+    description:
+      "Latest AI research, space exploration, biology, and emerging tech — explained simply.",
     colorHex: "#3B82F6",
     tailwindColor: "blue",
     useWebSearch: true,
@@ -200,7 +207,8 @@ export const PERSONAS: Record<PersonaId, PersonaConfig> = {
     name: "Atlas",
     emoji: "💰",
     role: "Finance & Markets",
-    description: "Stock market news, crypto trends, economic events — data-driven, never financial advice.",
+    description:
+      "Stock market news, crypto trends, economic events — data-driven, never financial advice.",
     colorHex: "#10B981",
     tailwindColor: "emerald",
     useWebSearch: true,
@@ -209,7 +217,7 @@ export const PERSONAS: Record<PersonaId, PersonaConfig> = {
       "and financial concepts clearly using real data. You NEVER give buy, sell, or investment " +
       "advice — instead you present information and let users draw their own conclusions. Always " +
       "search for the latest market data, news, and economic indicators before responding. End " +
-      "every response with: \"Remember: this is informational only, not financial advice.\" " +
+      'every response with: "Remember: this is informational only, not financial advice." ' +
       "Keep responses under 250 words.",
     starterQuestions: [
       "What's happening in the stock market today?",
@@ -224,7 +232,8 @@ export const PERSONAS: Record<PersonaId, PersonaConfig> = {
     name: "Lex",
     emoji: "⚖️",
     role: "Legal Explainer",
-    description: "Laws, rights, contracts, and landmark cases — in plain language. Not legal advice.",
+    description:
+      "Laws, rights, contracts, and landmark cases — in plain language. Not legal advice.",
     colorHex: "#8B5CF6",
     tailwindColor: "violet",
     useWebSearch: true,
@@ -233,14 +242,15 @@ export const PERSONAS: Record<PersonaId, PersonaConfig> = {
       "terminology, and landmark cases in plain language. You NEVER give legal advice or tell " +
       "someone what to do in their specific situation — you explain how laws generally work and " +
       "encourage consulting a qualified lawyer for personal situations. Search for relevant laws " +
-      "or cases when asked. End every response with: \"Please consult a qualified lawyer for " +
-      "advice specific to your situation.\" Keep responses under 250 words.",
+      'or cases when asked. End every response with: "Please consult a qualified lawyer for ' +
+      'advice specific to your situation." Keep responses under 250 words.',
     starterQuestions: [
       "What does GDPR actually mean for regular people?",
       "What are my rights if a company fires me?",
       "Explain what a non-disclosure agreement does",
     ],
-    disclaimer: "This is not legal advice. Consult a qualified lawyer for your situation.",
+    disclaimer:
+      "This is not legal advice. Consult a qualified lawyer for your situation.",
     inputPlaceholder: "Ask Lex about laws & legal concepts...",
   },
   sage: {
@@ -248,7 +258,8 @@ export const PERSONAS: Record<PersonaId, PersonaConfig> = {
     name: "Sage",
     emoji: "🎓",
     role: "Learning Coach",
-    description: "Patient, encouraging, Socratic. Explains anything in simple terms with analogies.",
+    description:
+      "Patient, encouraging, Socratic. Explains anything in simple terms with analogies.",
     colorHex: "#F59E0B",
     tailwindColor: "amber",
     useWebSearch: false,
@@ -272,7 +283,8 @@ export const PERSONAS: Record<PersonaId, PersonaConfig> = {
     name: "Pulse",
     emoji: "🌍",
     role: "News & World Events",
-    description: "Neutral, balanced world news. Always searches before answering — no opinions.",
+    description:
+      "Neutral, balanced world news. Always searches before answering — no opinions.",
     colorHex: "#EF4444",
     tailwindColor: "red",
     useWebSearch: true,
@@ -298,8 +310,9 @@ export const isValidPersonaId = (id: string): id is PersonaId => id in PERSONAS;
 ```
 
 Add to `libs/shared-utils/src/index.ts`:
+
 ```typescript
-export * from './persona.constants';
+export * from "./persona.constants";
 ```
 
 ### 1.4 Kafka Events
@@ -347,7 +360,9 @@ export interface PersonaMessageDoc {
 }
 
 export interface PersonaMessageRepository {
-  save(doc: Omit<PersonaMessageDoc, "id" | "createdAt">): Promise<PersonaMessageDoc>;
+  save(
+    doc: Omit<PersonaMessageDoc, "id" | "createdAt">,
+  ): Promise<PersonaMessageDoc>;
   findByUserAndPersona(
     userId: string,
     personaId: PersonaId,
@@ -387,25 +402,51 @@ export class PersonaChatDto {
 
 const BLOCKED_PATTERNS: Record<string, string[]> = {
   injection: [
-    "ignore previous", "ignore your system", "you are now", "act as",
-    "pretend you are", "jailbreak", "dan mode", "developer mode",
-    "override", "disregard your", "forget everything", "new persona",
+    "ignore previous",
+    "ignore your system",
+    "you are now",
+    "act as",
+    "pretend you are",
+    "jailbreak",
+    "dan mode",
+    "developer mode",
+    "override",
+    "disregard your",
+    "forget everything",
+    "new persona",
   ],
   credentials: [
-    "api key", "secret key", "password", "env variable", "credentials",
-    "access token", "private key", "give me your", "show me your",
+    "api key",
+    "secret key",
+    "password",
+    "env variable",
+    "credentials",
+    "access token",
+    "private key",
+    "give me your",
+    "show me your",
   ],
   codeGen: [
-    "build me", "build this", "write me a", "write code", "create an app",
-    "generate code", "make me a", "develop a", "code for",
-    "write a function", "write a script", "write a program",
+    "build me",
+    "build this",
+    "write me a",
+    "write code",
+    "create an app",
+    "generate code",
+    "make me a",
+    "develop a",
+    "code for",
+    "write a function",
+    "write a script",
+    "write a program",
   ],
 };
 
 const BLOCKED_RESPONSES: Record<string, string> = {
   injection: "⚠️ That kind of instruction isn't something I can follow.",
   credentials: "🔒 I don't share or reveal any keys or credentials.",
-  codeGen: "🛠️ I can answer questions and search the web, but I don't write code.",
+  codeGen:
+    "🛠️ I can answer questions and search the web, but I don't write code.",
   too_long: "✂️ Your message is too long. Please keep it under 600 characters.",
   empty: "💬 Please type a message to get started.",
 };
@@ -416,11 +457,19 @@ function validatePersonaQuery(
 ): { valid: boolean; category?: string; response?: string } {
   const lower = message.toLowerCase().trim();
   if (!lower) {
-    return { valid: false, category: "empty", response: BLOCKED_RESPONSES.empty };
+    return {
+      valid: false,
+      category: "empty",
+      response: BLOCKED_RESPONSES.empty,
+    };
   }
   // MaxLength is enforced by DTO, but guard here too
   if (lower.length > 600) {
-    return { valid: false, category: "too_long", response: BLOCKED_RESPONSES.too_long };
+    return {
+      valid: false,
+      category: "too_long",
+      response: BLOCKED_RESPONSES.too_long,
+    };
   }
   for (const [category, patterns] of Object.entries(BLOCKED_PATTERNS)) {
     // Sage may discuss coding concepts; block code *generation* patterns only for others
@@ -589,7 +638,10 @@ export class RunPersonaAgentUseCase {
 // apps/chat-service/src/application/use-cases/get-persona-history.use-case.ts
 import { Injectable, Inject, BadRequestException } from "@nestjs/common";
 import { PersonaId, isValidPersonaId } from "@shared-utils";
-import { PersonaMessageRepository, PersonaMessageDoc } from "../ports/persona-message.repository";
+import {
+  PersonaMessageRepository,
+  PersonaMessageDoc,
+} from "../ports/persona-message.repository";
 
 @Injectable()
 export class GetPersonaHistoryUseCase {
@@ -630,7 +682,10 @@ export class ClearPersonaHistoryUseCase {
     private readonly personaMessageRepo: PersonaMessageRepository,
   ) {}
 
-  async execute(userId: string, personaId: string): Promise<{ deleted: number }> {
+  async execute(
+    userId: string,
+    personaId: string,
+  ): Promise<{ deleted: number }> {
     if (!isValidPersonaId(personaId)) {
       throw new BadRequestException(`Invalid personaId: ${personaId}`);
     }
@@ -652,7 +707,10 @@ export class ClearPersonaHistoryUseCase {
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import Groq from "groq-sdk";
-import type { ChatCompletionTool, ChatCompletionMessageParam } from "groq-sdk/resources/chat/completions";
+import type {
+  ChatCompletionTool,
+  ChatCompletionMessageParam,
+} from "groq-sdk/resources/chat/completions";
 import { TavilyWebSearchService } from "./tavily-web-search.service";
 
 const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
@@ -894,9 +952,7 @@ import {
 import { PersonaMessage } from "./schemas/persona-message.schema";
 
 @Injectable()
-export class MongoosePersonaMessageRepository
-  implements PersonaMessageRepository
-{
+export class MongoosePersonaMessageRepository implements PersonaMessageRepository {
   constructor(
     @InjectModel(PersonaMessage.name)
     private readonly model: Model<PersonaMessage>,
@@ -1003,7 +1059,10 @@ export class PersonaController {
   @ApiResponse({ status: 200, description: "AI persona reply" })
   @ApiResponse({ status: 400, description: "Blocked or invalid personaId" })
   @ApiResponse({ status: 401, description: "Unauthorized" })
-  @ApiResponse({ status: 429, description: "Rate limited (5s cooldown or 20/hr)" })
+  @ApiResponse({
+    status: 429,
+    description: "Rate limited (5s cooldown or 20/hr)",
+  })
   @ApiResponse({ status: 503, description: "LLM or search unavailable" })
   async chat(
     @Req() req: RequestWithUser,
@@ -1137,9 +1196,9 @@ pnpm nx test chat-service
 
 ### 3.1 Routes / Pages
 
-| Route | Page File | New or Modified | Purpose |
-|-------|-----------|-----------------|---------|
-| `/explore` | `apps/frontend/app/explore/page.tsx` | created | Persona grid or chat view |
+| Route      | Page File                            | New or Modified | Purpose                   |
+| ---------- | ------------------------------------ | --------------- | ------------------------- |
+| `/explore` | `apps/frontend/app/explore/page.tsx` | created         | Persona grid or chat view |
 
 ### 3.2 Types
 
@@ -1251,10 +1310,7 @@ export const usePersonaStore = create<PersonaState>((set) => ({
 ```typescript
 // apps/frontend/src/features/persona/services/persona.service.ts
 import apiClient from "../../../shared/lib/apiClient";
-import {
-  PersonaChatResponse,
-  PersonaHistoryResponse,
-} from "../types";
+import { PersonaChatResponse, PersonaHistoryResponse } from "../types";
 
 export const personaService = {
   async chat(dto: {
@@ -1371,8 +1427,12 @@ export const usePersonaChat = (personaId: PersonaId) => {
       const msg = (data?.message as string | undefined) ?? "";
 
       if (status === 429) {
-        const secondsRemaining = (data?.secondsRemaining as number | undefined) ?? 0;
-        setRateLimit(personaId, { blocked: true, secondsLeft: secondsRemaining });
+        const secondsRemaining =
+          (data?.secondsRemaining as number | undefined) ?? 0;
+        setRateLimit(personaId, {
+          blocked: true,
+          secondsLeft: secondsRemaining,
+        });
         toast(msg || "Please wait before sending another message", {
           position: "bottom-center",
           style: { background: "#f59e0b", color: "#fff" },
@@ -1491,11 +1551,7 @@ export const PersonaGrid = ({ onSelect }: PersonaGridProps) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {PERSONA_IDS.map((id) => (
-        <PersonaCard
-          key={id}
-          persona={PERSONAS[id]}
-          onSelect={onSelect}
-        />
+        <PersonaCard key={id} persona={PERSONAS[id]} onSelect={onSelect} />
       ))}
     </div>
   );
@@ -1613,7 +1669,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { PersonaId, PERSONAS } from "@shared-utils";
 import { cn } from "../../../shared/utils/cn";
 import { usePersonaStore } from "../store/usePersonaStore";
-import { usePersonaHistory, usePersonaChat, useClearPersonaHistory } from "../hooks/usePersona";
+import {
+  usePersonaHistory,
+  usePersonaChat,
+  useClearPersonaHistory,
+} from "../hooks/usePersona";
 import { DisclaimerBanner } from "./DisclaimerBanner";
 import { PersonaThinkingIndicator } from "./PersonaThinkingIndicator";
 import { StarterQuestionChips } from "./StarterQuestionChips";
@@ -1635,8 +1695,11 @@ export const PersonaChat = ({ personaId, onBack }: PersonaChatProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const { isLoading: historyLoading, isError: historyError, refetch } =
-    usePersonaHistory(personaId);
+  const {
+    isLoading: historyLoading,
+    isError: historyError,
+    refetch,
+  } = usePersonaHistory(personaId);
   const chatMutation = usePersonaChat(personaId);
   const clearMutation = useClearPersonaHistory(personaId);
 
@@ -1684,7 +1747,9 @@ export const PersonaChat = ({ personaId, onBack }: PersonaChatProps) => {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-foreground">{persona.name}</span>
+            <span className="font-semibold text-foreground">
+              {persona.name}
+            </span>
             {persona.useWebSearch && (
               <span className="flex items-center gap-1 text-[10px] text-muted-foreground border border-border rounded-full px-2 py-0.5">
                 <span
@@ -1695,7 +1760,9 @@ export const PersonaChat = ({ personaId, onBack }: PersonaChatProps) => {
               </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground truncate">{persona.role}</p>
+          <p className="text-xs text-muted-foreground truncate">
+            {persona.role}
+          </p>
         </div>
         <button
           type="button"
@@ -1710,7 +1777,12 @@ export const PersonaChat = ({ personaId, onBack }: PersonaChatProps) => {
       </div>
 
       {/* Disclaimer banner */}
-      {persona.disclaimer && <DisclaimerBanner text={persona.disclaimer} colorHex={persona.colorHex} />}
+      {persona.disclaimer && (
+        <DisclaimerBanner
+          text={persona.disclaimer}
+          colorHex={persona.colorHex}
+        />
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
@@ -2043,18 +2115,18 @@ pnpm nx test frontend
 
 ## 4. Architecture Decisions
 
-| # | Decision | Options Considered | Choice | Rationale |
-|---|----------|--------------------|--------|-----------|
-| 1 | Where do persona endpoints live? | New service vs extend chat-service | Extend chat-service | Groq, Tavily, and TavilyWebSearchService are already injectable there; zero new infrastructure |
-| 2 | New `PersonaGroqAgentService` vs reuse `GroqAgentService` | Add method to existing | New service | `GroqAgentService.run()` has a hardcoded system prompt and 4-tool set; adding a `runWithCustomPrompt()` overload would muddy the existing agent port interface. A dedicated service keeps concerns clean. |
-| 3 | `PersonaMessage` collection vs reuse `Message` | Share collection | Separate collection | `Message` requires `conversationId`, participates in unread counts, and has reaction/reply/status fields meaningless for persona chats. A separate collection keeps queries simple and the schema honest. |
-| 4 | Separate `PersonaRateLimiterService` vs extend existing | Extend `AgentRateLimiterService` | New service | Existing service has a 10s cooldown with no hourly cap. Extending it with conditional branching would make both harder to test and maintain. |
-| 5 | History fetched by backend vs passed by frontend | Frontend passes history | Backend reads from DB | Consistent with `RunAiAgentUseCase` pattern; prevents history manipulation; frontend state is local-only optimistic display. |
-| 6 | Shared PERSONAS constant location | `apps/*/constants.ts` (duplicated) vs `libs/shared-utils` | `libs/shared-utils` | `@shared-utils` path alias is confirmed in `tsconfig.base.json`; both backend and frontend can import it without duplication. Single source of truth for system prompts, which must stay identical between implementations. |
-| 7 | Web search tool set for personas | Full 4-tool set (weather, translate, URL, search) vs web_search only | web_search only | Personas answer factual questions and news — they have no use case for weather, translation, or URL summarisation tools. Restricting the tool set reduces Turn 1 model confusion and latency. |
-| 8 | Optimistic UI for messages | Pessimistic (wait for response) vs optimistic (user msg appears immediately) | Optimistic user, real AI | User message is appended immediately on send to feel instant; AI reply appears on `onSuccess`. This matches the existing `useSendMessage` optimistic pattern. |
-| 9 | Rate limit storage | Redis vs in-memory Map | In-memory Map | Same choice as `AgentRateLimiterService`. Persona rate limits reset on deploy (acceptable). Redis would add a round-trip on every message for a UX guardrail, not a billing-critical limit. |
-| 10 | `/explore` route | `/home` vs `/explore` | `/explore` | `/home` is semantically ambiguous; `/explore` signals discovery of AI personas clearly. |
+| #   | Decision                                                  | Options Considered                                                           | Choice                   | Rationale                                                                                                                                                                                                                   |
+| --- | --------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Where do persona endpoints live?                          | New service vs extend chat-service                                           | Extend chat-service      | Groq, Tavily, and TavilyWebSearchService are already injectable there; zero new infrastructure                                                                                                                              |
+| 2   | New `PersonaGroqAgentService` vs reuse `GroqAgentService` | Add method to existing                                                       | New service              | `GroqAgentService.run()` has a hardcoded system prompt and 4-tool set; adding a `runWithCustomPrompt()` overload would muddy the existing agent port interface. A dedicated service keeps concerns clean.                   |
+| 3   | `PersonaMessage` collection vs reuse `Message`            | Share collection                                                             | Separate collection      | `Message` requires `conversationId`, participates in unread counts, and has reaction/reply/status fields meaningless for persona chats. A separate collection keeps queries simple and the schema honest.                   |
+| 4   | Separate `PersonaRateLimiterService` vs extend existing   | Extend `AgentRateLimiterService`                                             | New service              | Existing service has a 10s cooldown with no hourly cap. Extending it with conditional branching would make both harder to test and maintain.                                                                                |
+| 5   | History fetched by backend vs passed by frontend          | Frontend passes history                                                      | Backend reads from DB    | Consistent with `RunAiAgentUseCase` pattern; prevents history manipulation; frontend state is local-only optimistic display.                                                                                                |
+| 6   | Shared PERSONAS constant location                         | `apps/*/constants.ts` (duplicated) vs `libs/shared-utils`                    | `libs/shared-utils`      | `@shared-utils` path alias is confirmed in `tsconfig.base.json`; both backend and frontend can import it without duplication. Single source of truth for system prompts, which must stay identical between implementations. |
+| 7   | Web search tool set for personas                          | Full 4-tool set (weather, translate, URL, search) vs web_search only         | web_search only          | Personas answer factual questions and news — they have no use case for weather, translation, or URL summarisation tools. Restricting the tool set reduces Turn 1 model confusion and latency.                               |
+| 8   | Optimistic UI for messages                                | Pessimistic (wait for response) vs optimistic (user msg appears immediately) | Optimistic user, real AI | User message is appended immediately on send to feel instant; AI reply appears on `onSuccess`. This matches the existing `useSendMessage` optimistic pattern.                                                               |
+| 9   | Rate limit storage                                        | Redis vs in-memory Map                                                       | In-memory Map            | Same choice as `AgentRateLimiterService`. Persona rate limits reset on deploy (acceptable). Redis would add a round-trip on every message for a UX guardrail, not a billing-critical limit.                                 |
+| 10  | `/explore` route                                          | `/home` vs `/explore`                                                        | `/explore`               | `/home` is semantically ambiguous; `/explore` signals discovery of AI personas clearly.                                                                                                                                     |
 
 ---
 
