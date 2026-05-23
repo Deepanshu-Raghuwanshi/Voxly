@@ -19,7 +19,7 @@ export const AuthSuccess = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-secondary">
-      <div className="bg-white p-8 rounded-2xl shadow-xl border border-blue-100 flex flex-col items-center gap-4 animate-in fade-in duration-500">
+      <div className="bg-card p-8 rounded-2xl shadow-xl border border-border flex flex-col items-center gap-4 animate-in fade-in duration-500">
         <Spinner className="w-10 h-10 text-primary" />
         <h2 className="text-xl font-semibold text-foreground">{t('title')}</h2>
         <p className="text-foreground/60">{t('message')}</p>

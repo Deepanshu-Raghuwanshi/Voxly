@@ -140,7 +140,7 @@ export const MessageComposer = ({
     if (content.toLowerCase().startsWith("@ai")) {
       const query = content.replace(/^@ai\s*/i, "").trim();
       if (!query) {
-        toast("Add your question after @AI. Example: @AI weather in Tokyo", {
+        toast(t("ai_agent_empty_query"), {
           position: "bottom-center",
           duration: 3000,
         });

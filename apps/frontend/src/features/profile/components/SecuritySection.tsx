@@ -1,32 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 import { useTranslations } from "next-intl";
-import { useProfile } from "../hooks/useProfile";
-import { Spinner } from "../../../shared/components/ui/spinner";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 import { Shield, Mail, Lock, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-const SecuritySection = ({ userId }: { userId?: string }) => {
+const SecuritySection = () => {
   const t = useTranslations("features.profile");
   const { user } = useAuthStore();
-  const { changeEmail, isChangingEmail } = useProfile(userId);
-  const [newEmail, setNewEmail] = useState("");
-  const [isChanging, setIsChanging] = useState(false);
-
-  const handleEmailChange = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedEmail = newEmail.trim();
-    if (trimmedEmail && trimmedEmail !== user?.email) {
-      changeEmail(trimmedEmail);
-      setIsChanging(false);
-      setNewEmail("");
-    }
-  };
-
-  const isEmailDirty =
-    newEmail.trim() !== "" && newEmail.trim() !== user?.email;
-  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail.trim());
-  const canSubmitEmail = isEmailDirty && isEmailValid && !isChangingEmail;
 
   return (
     <div className="space-y-6 bg-card p-6 rounded-xl shadow-sm border border-border mt-6">
@@ -37,62 +17,16 @@ const SecuritySection = ({ userId }: { userId?: string }) => {
 
       <div className="space-y-4">
         {/* Email Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-lg bg-muted/40 border border-border gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <Mail className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                {t("fields.email")}
-              </p>
-              <p className="text-muted-foreground">{user?.email}</p>
-            </div>
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/40 border border-border">
+          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+            <Mail className="w-5 h-5 text-blue-600" />
           </div>
-
-          {!isChanging ? (
-            <button
-              onClick={() => setIsChanging(true)}
-              className="px-4 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
-            >
-              {t("buttons.change_email")}
-            </button>
-          ) : (
-            <form
-              onSubmit={handleEmailChange}
-              className="flex items-center gap-2"
-            >
-              <input
-                type="email"
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                placeholder="New email address"
-                className="px-3 py-2 text-sm rounded-lg border border-border outline-none focus:ring-2 focus:ring-primary/20 bg-background text-foreground"
-                required
-              />
-              <button
-                type="submit"
-                disabled={!canSubmitEmail}
-                className="px-4 py-2 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                {isChangingEmail ? (
-                  <Spinner className="w-4 h-4 text-white" />
-                ) : (
-                  t("common.buttons.submit")
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsChanging(false);
-                  setNewEmail("");
-                }}
-                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary rounded-lg transition-colors"
-              >
-                {t("common.buttons.cancel")}
-              </button>
-            </form>
-          )}
+          <div>
+            <p className="text-sm font-medium text-foreground">
+              {t("fields.email")}
+            </p>
+            <p className="text-muted-foreground">{user?.email}</p>
+          </div>
         </div>
 
         {/* Password Section */}

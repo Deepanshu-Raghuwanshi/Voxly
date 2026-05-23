@@ -42,7 +42,7 @@ export const ConversationHeader = ({
       <button
         onClick={() => router.push("/chat")}
         className="p-1 rounded-lg hover:bg-secondary transition-colors md:hidden"
-        aria-label="Back"
+        aria-label={t("back_label")}
       >
         <ArrowLeft className="w-5 h-5 text-foreground/60" />
       </button>

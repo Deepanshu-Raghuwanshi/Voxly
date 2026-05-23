@@ -5,6 +5,7 @@ import { RewriteMessageUseCase } from "../../src/application/use-cases/rewrite-m
 import { GenerateSmartRepliesUseCase } from "../../src/application/use-cases/generate-smart-replies.use-case";
 import { SummarizeConversationUseCase } from "../../src/application/use-cases/summarize-conversation.use-case";
 import { AiSummarizeDto } from "../../src/application/dto/ai-summarize.dto";
+import { RunAiAgentUseCase } from "../../src/application/use-cases/run-ai-agent.use-case";
 import { RequestWithUser } from "../../src/interfaces/request-with-user.interface";
 
 function makeReq(userId = "user-1"): RequestWithUser {
@@ -22,6 +23,7 @@ describe("AiController — summarize (Unit)", () => {
       {} as unknown as RewriteMessageUseCase,
       {} as unknown as GenerateSmartRepliesUseCase,
       summarizeUseCase as unknown as SummarizeConversationUseCase,
+      {} as unknown as RunAiAgentUseCase,
     );
   });
 

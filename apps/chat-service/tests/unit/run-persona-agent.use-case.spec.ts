@@ -31,7 +31,7 @@ describe("RunPersonaAgentUseCase", () => {
       save: sinon.stub().resolves(MOCK_DOC),
       findByUserAndPersona: sinon.stub().resolves([]),
       deleteByUserAndPersona: sinon.stub().resolves(0),
-    };
+    } as unknown as sinon.SinonStubbedInstance<PersonaMessageRepository>;
     rateLimiterStub = {
       check: sinon.stub().returns({ allowed: true }),
     } as unknown as sinon.SinonStubbedInstance<PersonaRateLimiterService>;

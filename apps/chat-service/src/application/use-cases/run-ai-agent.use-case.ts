@@ -195,14 +195,44 @@ export class RunAiAgentUseCase {
       );
     }
 
-    // 6. Emit AI typing indicator
+    // 6. Save the user's query as a regular visible message so both participants
+    //    see what was asked (Telegram/Discord/Slack bot pattern).
+    try {
+      const queryMessage = await this.messageRepository.create({
+        conversationId,
+        senderId: userId,
+        content: message,
+        type: "TEXT",
+        isAI: false,
+      });
+      this.presenceGateway.emitToRoom(
+        `conversation:${conversationId}`,
+        "message.new",
+        {
+          messageId: queryMessage.id,
+          conversationId,
+          senderId: userId,
+          receiverId: "",
+          content: queryMessage.content,
+          type: queryMessage.type,
+          sentAt: queryMessage.createdAt.toISOString(),
+        },
+      );
+    } catch (err) {
+      this.logger.error(
+        `[AGENT] Failed to save query message | userId=${userId} | query="${message}"`,
+        err instanceof Error ? err.stack : undefined,
+      );
+    }
+
+    // 7. Emit AI typing indicator
     this.presenceGateway.emitToRoom(
       `conversation:${conversationId}`,
       "typing.started",
       { conversationId, userId: "AI" },
     );
 
-    // 7. Fetch last 6 non-deleted messages as context
+    // 8. Fetch last 6 non-deleted messages as context
     const rawMessages = await this.messageRepository.findByConversationId(
       conversationId,
       6,
@@ -215,7 +245,7 @@ export class RunAiAgentUseCase {
         content: m.content,
       }));
 
-    // 8. Run agent
+    // 9. Run agent
     let agentResult: AgentResult;
     try {
       agentResult = await this.aiAgent.run(cleanQuery, contextMessages, userId);
@@ -235,7 +265,7 @@ export class RunAiAgentUseCase {
       );
     }
 
-    // 9–11. Persist message, stop typing, broadcast — finally guarantees typing.stopped even on DB failure
+    // 10–12. Persist AI response, stop typing, broadcast — finally guarantees typing.stopped even on DB failure
     let messageView: MessageView;
     try {
       const savedMessage = await this.messageRepository.create({

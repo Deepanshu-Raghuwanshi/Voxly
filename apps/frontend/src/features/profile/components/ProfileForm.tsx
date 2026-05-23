@@ -33,7 +33,6 @@ const ProfileForm = ({ userId }: { userId?: string }) => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
-    if (!isOwnProfile || !isEditing) return;
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -53,8 +52,6 @@ const ProfileForm = ({ userId }: { userId?: string }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isOwnProfile || !isEditing) return;
-
     const trimmedData = {
       fullName: formData.fullName.trim(),
       bio: formData.bio.trim(),
@@ -62,7 +59,6 @@ const ProfileForm = ({ userId }: { userId?: string }) => {
       phoneNumber: formData.phoneNumber.trim(),
       countryCode: formData.countryCode.trim(),
     };
-
     try {
       await updateProfileAsync(trimmedData);
       setIsEditing(false);
@@ -72,7 +68,7 @@ const ProfileForm = ({ userId }: { userId?: string }) => {
   };
 
   const isFormDirty = () => {
-    if (!profile || !isOwnProfile) return false;
+    if (!profile) return false;
     return (
       formData.fullName.trim() !== (profile.fullName || "") ||
       formData.bio.trim() !== (profile.bio || "") ||
@@ -82,9 +78,12 @@ const ProfileForm = ({ userId }: { userId?: string }) => {
     );
   };
 
-  const isFormValid = () => formData.fullName.trim().length > 0;
+  const canUpdate =
+    isEditing && isFormDirty() && formData.fullName.trim().length > 0 && !isUpdating;
 
-  const canUpdate = isEditing && isFormDirty() && isFormValid() && !isUpdating;
+  const empty = (
+    <span className="text-muted-foreground/50 text-sm italic">—</span>
+  );
 
   return (
     <form
@@ -108,6 +107,7 @@ const ProfileForm = ({ userId }: { userId?: string }) => {
       </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        {/* Full Name */}
         <div className="space-y-1">
           <label
             htmlFor="fullName"
@@ -115,19 +115,25 @@ const ProfileForm = ({ userId }: { userId?: string }) => {
           >
             {t("fields.fullName")}
           </label>
-          <input
-            type="text"
-            id="fullName"
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            placeholder={t("placeholders.fullName")}
-            className="block w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none disabled:bg-muted disabled:text-muted-foreground"
-            required
-            disabled={!isEditing || !isOwnProfile}
-          />
+          {isEditing ? (
+            <input
+              type="text"
+              id="fullName"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              placeholder={t("placeholders.fullName")}
+              className="block w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none bg-background"
+              required
+            />
+          ) : (
+            <p className="text-sm text-foreground py-1">
+              {formData.fullName || empty}
+            </p>
+          )}
         </div>
 
+        {/* Status */}
         <div className="space-y-1">
           <label
             htmlFor="status"
@@ -135,18 +141,24 @@ const ProfileForm = ({ userId }: { userId?: string }) => {
           >
             {t("fields.status")}
           </label>
-          <input
-            type="text"
-            id="status"
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            placeholder={t("placeholders.status")}
-            className="block w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none disabled:bg-muted disabled:text-muted-foreground"
-            disabled={!isEditing || !isOwnProfile}
-          />
+          {isEditing ? (
+            <input
+              type="text"
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              placeholder={t("placeholders.status")}
+              className="block w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none bg-background"
+            />
+          ) : (
+            <p className="text-sm text-foreground py-1">
+              {formData.status || empty}
+            </p>
+          )}
         </div>
 
+        {/* Bio */}
         <div className="sm:col-span-2 space-y-1">
           <label
             htmlFor="bio"
@@ -154,20 +166,78 @@ const ProfileForm = ({ userId }: { userId?: string }) => {
           >
             {t("fields.bio")}
           </label>
-          <textarea
-            id="bio"
-            name="bio"
-            rows={3}
-            value={formData.bio}
-            onChange={handleChange}
-            placeholder={t("placeholders.bio")}
-            className="block w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none resize-none disabled:bg-muted disabled:text-muted-foreground"
-            disabled={!isEditing || !isOwnProfile}
-          />
+          {isEditing ? (
+            <textarea
+              id="bio"
+              name="bio"
+              rows={3}
+              value={formData.bio}
+              onChange={handleChange}
+              placeholder={t("placeholders.bio")}
+              className="block w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none resize-none bg-background"
+            />
+          ) : (
+            <p className="text-sm text-foreground py-1 whitespace-pre-wrap">
+              {formData.bio || empty}
+            </p>
+          )}
         </div>
+
+        {/* Phone Number */}
+        {isOwnProfile && (
+          <>
+            <div className="space-y-1">
+              <label
+                htmlFor="countryCode"
+                className="block text-sm font-medium text-foreground"
+              >
+                {t("fields.countryCode")}
+              </label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  id="countryCode"
+                  name="countryCode"
+                  value={formData.countryCode}
+                  onChange={handleChange}
+                  placeholder={t("placeholders.countryCode")}
+                  className="block w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none bg-background"
+                />
+              ) : (
+                <p className="text-sm text-foreground py-1">
+                  {formData.countryCode || empty}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="phoneNumber"
+                className="block text-sm font-medium text-foreground"
+              >
+                {t("fields.phoneNumber")}
+              </label>
+              {isEditing ? (
+                <input
+                  type="text"
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  placeholder={t("placeholders.phoneNumber")}
+                  className="block w-full px-4 py-2 rounded-lg border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none bg-background"
+                />
+              ) : (
+                <p className="text-sm text-foreground py-1">
+                  {formData.phoneNumber || empty}
+                </p>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
-      {isOwnProfile && isEditing && (
+      {isEditing && (
         <div className="pt-4 flex justify-end gap-3">
           <button
             type="button"

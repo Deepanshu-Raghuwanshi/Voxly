@@ -172,6 +172,9 @@
       }
     },
     "friends": {
+      "errors": {
+        "send_request_failed": "Could not send friend request"
+      },
       "sections": {
         "incoming_requests": "Incoming Requests",
         "friends": "Friends",
@@ -198,7 +201,7 @@
     },
     "chat": {
       "dashboard": {
-        "title": "Welcome to Chat App!",
+        "title": "Welcome to Voxly!",
         "greeting": "Hello, {name}!",
         "message": "We are currently setting things up. The full chat experience will be starting soon.",
         "button_friends": "Go to Friends",
@@ -215,6 +218,7 @@
         "placeholder": "Type a message...",
         "placeholder_with_ai_hint": "Message... or tap @AI to search, weather, translate",
         "ai_agent_chip_label": "Activate AI agent",
+        "ai_agent_empty_query": "Add your question after @AI. Example: @AI weather in Tokyo",
         "send": "Send",
         "emoji_button_label": "Open emoji picker",
         "cancel_reply": "Cancel reply",
@@ -225,6 +229,10 @@
         "ai_tone_casual": "Casual",
         "ai_tone_shorter": "Shorter",
         "ai_tone_longer": "Longer"
+      },
+      "smart_replies": {
+        "loading_label": "Loading smart replies",
+        "suggestions_label": "Smart reply suggestions"
       },
       "message": {
         "deleted": "[deleted]",
@@ -242,6 +250,7 @@
         "typing": "typing…",
         "no_messages": "No messages yet",
         "you": "You",
+        "back_label": "Back",
         "summarize_button_label": "Summarize conversation",
         "summarize_button_tooltip": "Summarize last 50 messages"
       },
@@ -302,7 +311,7 @@
       }
     },
     "navbar": {
-      "app_name": "Chat App",
+      "app_name": "Voxly",
       "home": "Home",
       "friends": "Friends",
       "explore": "AI Experts",
@@ -324,7 +333,7 @@
       }
     },
     "home": {
-      "title": "Welcome to Chat App",
+      "title": "Welcome to Voxly",
       "description": "Connect with friends and colleagues in real-time. Fast, secure, and easy to use.",
       "buttons": {
         "login": "Login",
@@ -368,7 +377,8 @@
         "bio": "Tell us something about yourself",
         "status": "What's on your mind?",
         "phoneNumber": "e.g. 1234567890",
-        "countryCode": "+1"
+        "countryCode": "+1",
+        "newEmail": "New email address"
       },
       "toasts": {
         "profile_updated": "Profile updated",

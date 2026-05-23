@@ -67,8 +67,8 @@ describe("runWithFallbackChain", () => {
 
     const result = await runWithFallbackChain(
       [
-        { name: "first", fn: first },
-        { name: "second", fn: second },
+        { name: "first", model: "test", feature: "test", fn: first },
+        { name: "second", model: "test", feature: "test", fn: second },
       ],
       logger,
     );
@@ -82,8 +82,8 @@ describe("runWithFallbackChain", () => {
 
     await runWithFallbackChain(
       [
-        { name: "first", fn: first },
-        { name: "second", fn: second },
+        { name: "first", model: "test", feature: "test", fn: first },
+        { name: "second", model: "test", feature: "test", fn: second },
       ],
       logger,
     );
@@ -97,8 +97,8 @@ describe("runWithFallbackChain", () => {
 
     const result = await runWithFallbackChain(
       [
-        { name: "first", fn: first },
-        { name: "second", fn: second },
+        { name: "first", model: "test", feature: "test", fn: first },
+        { name: "second", model: "test", feature: "test", fn: second },
       ],
       logger,
     );
@@ -113,8 +113,8 @@ describe("runWithFallbackChain", () => {
 
     const result = await runWithFallbackChain(
       [
-        { name: "first", fn: first },
-        { name: "second", fn: second },
+        { name: "first", model: "test", feature: "test", fn: first },
+        { name: "second", model: "test", feature: "test", fn: second },
       ],
       logger,
     );
@@ -128,8 +128,8 @@ describe("runWithFallbackChain", () => {
 
     const result = await runWithFallbackChain(
       [
-        { name: "first", fn: first },
-        { name: "second", fn: second },
+        { name: "first", model: "test", feature: "test", fn: first },
+        { name: "second", model: "test", feature: "test", fn: second },
       ],
       logger,
     );
@@ -143,8 +143,8 @@ describe("runWithFallbackChain", () => {
 
     const result = await runWithFallbackChain(
       [
-        { name: "first", fn: first },
-        { name: "second", fn: second },
+        { name: "first", model: "test", feature: "test", fn: first },
+        { name: "second", model: "test", feature: "test", fn: second },
       ],
       logger,
     );
@@ -159,8 +159,8 @@ describe("runWithFallbackChain", () => {
     try {
       await runWithFallbackChain(
         [
-          { name: "first", fn: first },
-          { name: "second", fn: second },
+          { name: "first", model: "test", feature: "test", fn: first },
+          { name: "second", model: "test", feature: "test", fn: second },
         ],
         logger,
       );
@@ -177,9 +177,9 @@ describe("runWithFallbackChain", () => {
 
     const result = await runWithFallbackChain(
       [
-        { name: "first", fn: first },
-        { name: "second", fn: second },
-        { name: "third", fn: third },
+        { name: "first", model: "test", feature: "test", fn: first },
+        { name: "second", model: "test", feature: "test", fn: second },
+        { name: "third", model: "test", feature: "test", fn: third },
       ],
       logger,
     );
@@ -192,9 +192,9 @@ describe("runWithFallbackChain", () => {
 
   it("should throw ServiceUnavailableException with 3+ providers when all fail", async () => {
     const providers = [
-      { name: "a", fn: sinon.stub().rejects(new Error("a")) },
-      { name: "b", fn: sinon.stub().rejects(new Error("b")) },
-      { name: "c", fn: sinon.stub().rejects(new Error("c")) },
+      { name: "a", model: "test", feature: "test", fn: sinon.stub().rejects(new Error("a")) },
+      { name: "b", model: "test", feature: "test", fn: sinon.stub().rejects(new Error("b")) },
+      { name: "c", model: "test", feature: "test", fn: sinon.stub().rejects(new Error("c")) },
     ];
 
     try {
