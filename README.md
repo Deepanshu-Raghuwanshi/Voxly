@@ -1,4 +1,4 @@
-# ChatApp — Production-Grade AI-Powered Chat Platform
+# Voxyl — Production-Grade AI-Powered Chat Platform
 
 <div align="center">
 
@@ -32,7 +32,7 @@ A fully-featured, real-time 1:1 chat application built with a **microservices ar
 
 ## Overview
 
-ChatApp is a **production-grade** messaging platform that goes beyond basic chat. It is built as an **NX monorepo** containing five independent NestJS microservices, a Next.js 15 App Router frontend, and a shared type library — all wired together via an API gateway, Apache Kafka (KRaft mode), Socket.io with a Redis adapter, and a multi-model AI pipeline.
+Voxyl is a **production-grade** messaging platform that goes beyond basic chat. It is built as an **NX monorepo** containing five independent NestJS microservices, a Next.js 15 App Router frontend, and a shared type library — all wired together via an API gateway, Apache Kafka (KRaft mode), Socket.io with a Redis adapter, and a multi-model AI pipeline.
 
 The AI subsystem is the centrepiece: users interact with a real-time **@AI agent** that executes a two-turn agentic loop with native tool calling, while a separate `/explore` page hosts five distinct AI personas, each engineered with bespoke system prompts and scoped capabilities.
 
@@ -356,22 +356,17 @@ chat-system/                        ← NX monorepo root
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/Deepanshu-Raghuwanshi/chat-app.git
-cd chat-app
+git clone https://github.com/Deepanshu-Raghuwanshi/chat_app.git
+cd chat_app
 pnpm install
 ```
 
 ### 2. Environment variables
 
-Copy the example files and fill in your keys:
+Copy the root example file and fill in your keys:
 
 ```bash
-# Each service has its own .env
-cp apps/auth-service/.env.example apps/auth-service/.env
-cp apps/user-service/.env.example apps/user-service/.env
-cp apps/chat-service/.env.example apps/chat-service/.env
-cp apps/api-gateway/.env.example apps/api-gateway/.env
-cp apps/frontend/.env.local.example apps/frontend/.env.local
+cp .env.example .env
 ```
 
 Required third-party keys:
