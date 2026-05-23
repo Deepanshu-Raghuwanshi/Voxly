@@ -9,7 +9,9 @@ type InternalGroq = {
 };
 
 function makeConfigService(): ConfigService {
-  return { get: sinon.stub().returns("test-groq-key") } as unknown as ConfigService;
+  return {
+    get: sinon.stub().returns("test-groq-key"),
+  } as unknown as ConfigService;
 }
 
 function makeWebSearch(): sinon.SinonStubbedInstance<TavilyWebSearchService> {
@@ -71,7 +73,9 @@ describe("PersonaGroqAgentService (Unit)", () => {
 
   describe("single-turn mode (useWebSearch: false — Sage)", () => {
     it("should return the trimmed reply with toolUsed=direct", async () => {
-      createStub.resolves(directGroqResponse("  Recursion is self-reference.  "));
+      createStub.resolves(
+        directGroqResponse("  Recursion is self-reference.  "),
+      );
       const result = await service.run({ ...BASE_PARAMS, useWebSearch: false });
       expect(result.reply).to.equal("Recursion is self-reference.");
       expect(result.toolUsed).to.equal("direct");
@@ -136,10 +140,14 @@ describe("PersonaGroqAgentService (Unit)", () => {
         .onFirstCall()
         .resolves(toolCallGroqResponse("quantum computing breakthrough"))
         .onSecondCall()
-        .resolves(directGroqResponse("Here is a synthesis of the search results."));
+        .resolves(
+          directGroqResponse("Here is a synthesis of the search results."),
+        );
       const result = await service.run({ ...BASE_PARAMS, useWebSearch: true });
       expect(result.toolUsed).to.equal("web_search");
-      expect(result.reply).to.equal("Here is a synthesis of the search results.");
+      expect(result.reply).to.equal(
+        "Here is a synthesis of the search results.",
+      );
       expect(
         (webSearchStub.search as sinon.SinonStub).calledWith(
           "quantum computing breakthrough",

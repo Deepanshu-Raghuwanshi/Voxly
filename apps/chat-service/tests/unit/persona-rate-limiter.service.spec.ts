@@ -25,7 +25,8 @@ describe("PersonaRateLimiterService", () => {
     const svc = new PersonaRateLimiterService();
     const userId = "cooldown-pass-user";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const records = (svc as unknown as { records: Map<string, unknown> }).records;
+    const records = (svc as unknown as { records: Map<string, unknown> })
+      .records;
     records.set(userId, {
       lastCallAt: Date.now() - 6_000,
       hourlyCount: 1,
@@ -39,7 +40,8 @@ describe("PersonaRateLimiterService", () => {
     const svc = new PersonaRateLimiterService();
     const userId = "high-volume-user";
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const records = (svc as unknown as { records: Map<string, unknown> }).records;
+    const records = (svc as unknown as { records: Map<string, unknown> })
+      .records;
     records.set(userId, {
       lastCallAt: 0,
       hourlyCount: 19,

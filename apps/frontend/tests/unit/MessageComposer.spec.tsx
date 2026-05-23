@@ -87,7 +87,7 @@ describe("MessageComposer", () => {
     renderWithIntl(
       <MessageComposer participants={[]} conversationId="conv-2" />,
     );
-    const textarea = screen.getByPlaceholderText("Type a message...");
+    const textarea = screen.getByPlaceholderText("Message... or tap @AI to search, weather, translate");
     await simulate.type(textarea, "hello world");
     const sendButton = screen.getByRole("button", { name: /send/i });
     await simulate.click(sendButton);
@@ -111,7 +111,7 @@ describe("MessageComposer", () => {
     renderWithIntl(
       <MessageComposer participants={[]} conversationId="conv-3" />,
     );
-    const textarea = screen.getByPlaceholderText("Type a message...");
+    const textarea = screen.getByPlaceholderText("Message... or tap @AI to search, weather, translate");
     await simulate.type(textarea, "hello");
 
     const sendButton = screen.getByRole("button", { name: /send/i });
@@ -179,7 +179,7 @@ describe("MessageComposer", () => {
     renderWithIntl(
       <MessageComposer participants={[]} conversationId="conv-cursor" />,
     );
-    const textarea = screen.getByPlaceholderText("Type a message...");
+    const textarea = screen.getByPlaceholderText("Message... or tap @AI to search, weather, translate");
 
     await simulate.type(textarea, "helloworld");
 
@@ -388,7 +388,7 @@ describe("MessageComposer reply strip", () => {
     renderWithIntl(
       <MessageComposer participants={[]} conversationId="conv-qid" />,
     );
-    const textarea = screen.getByPlaceholderText("Type a message...");
+    const textarea = screen.getByPlaceholderText("Message... or tap @AI to search, weather, translate");
     await simulate.type(textarea, "my reply");
     const sendButton = screen.getByRole("button", { name: /send/i });
     await simulate.click(sendButton);
@@ -433,7 +433,7 @@ describe("MessageComposer — typing events", () => {
     renderWithIntl(
       <MessageComposer participants={[]} conversationId="conv-typing" />,
     );
-    const textarea = screen.getByPlaceholderText("Type a message...");
+    const textarea = screen.getByPlaceholderText("Message... or tap @AI to search, weather, translate");
 
     act(() => {
       fireEvent.change(textarea, { target: { value: "h" } });
@@ -447,7 +447,7 @@ describe("MessageComposer — typing events", () => {
     renderWithIntl(
       <MessageComposer participants={[]} conversationId="conv-burst" />,
     );
-    const textarea = screen.getByPlaceholderText("Type a message...");
+    const textarea = screen.getByPlaceholderText("Message... or tap @AI to search, weather, translate");
 
     act(() => {
       fireEvent.change(textarea, { target: { value: "h" } });
@@ -462,7 +462,7 @@ describe("MessageComposer — typing events", () => {
     renderWithIntl(
       <MessageComposer participants={[]} conversationId="conv-clear" />,
     );
-    const textarea = screen.getByPlaceholderText("Type a message...");
+    const textarea = screen.getByPlaceholderText("Message... or tap @AI to search, weather, translate");
 
     act(() => {
       fireEvent.change(textarea, { target: { value: "hello" } });
@@ -487,7 +487,7 @@ describe("MessageComposer — typing events", () => {
     renderWithIntl(
       <MessageComposer participants={[]} conversationId="conv-send" />,
     );
-    const textarea = screen.getByPlaceholderText("Type a message...");
+    const textarea = screen.getByPlaceholderText("Message... or tap @AI to search, weather, translate");
 
     act(() => {
       fireEvent.change(textarea, { target: { value: "hello" } });
@@ -503,7 +503,7 @@ describe("MessageComposer — typing events", () => {
     renderWithIntl(
       <MessageComposer participants={[]} conversationId="conv-timer" />,
     );
-    const textarea = screen.getByPlaceholderText("Type a message...");
+    const textarea = screen.getByPlaceholderText("Message... or tap @AI to search, weather, translate");
 
     act(() => {
       fireEvent.change(textarea, { target: { value: "hello" } });
@@ -565,7 +565,7 @@ describe("MessageComposer — @AI agent", () => {
     renderWithIntl(
       <MessageComposer participants={[]} conversationId="conv-ai" />,
     );
-    const textarea = screen.getByPlaceholderText("Type a message...");
+    const textarea = screen.getByPlaceholderText("Message... or tap @AI to search, weather, translate");
     await simulate.type(textarea, "hello there");
     const sendButton = screen.getByRole("button", { name: /send/i });
     await simulate.click(sendButton);
@@ -584,7 +584,7 @@ describe("MessageComposer — @AI agent", () => {
     renderWithIntl(
       <MessageComposer participants={[]} conversationId="conv-ai" />,
     );
-    const textarea = screen.getByPlaceholderText("Type a message...");
+    const textarea = screen.getByPlaceholderText("Message... or tap @AI to search, weather, translate");
     expect((textarea as HTMLTextAreaElement).disabled).toBe(true);
   });
 

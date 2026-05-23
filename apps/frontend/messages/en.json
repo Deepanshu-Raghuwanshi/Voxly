@@ -273,10 +273,39 @@
         "agent_rate_limited": "Slow down! AI is rate limited."
       }
     },
+    "persona": {
+      "explore_title": "AI Experts",
+      "explore_subtitle": "Chat with specialised AI agents powered by real-time web search",
+      "live_search_badge": "Live search",
+      "powered_by_web_search": "Powered by real-time web search",
+      "chat_now": "Chat now",
+      "chat_with": "Chat with {name}",
+      "ask_anything": "Ask me anything or try one of these:",
+      "back_label": "Back to persona list",
+      "new_conversation_label": "New conversation",
+      "history_loading": "Loading history...",
+      "thinking": "{name} is thinking",
+      "searched_web": "🔍 searched the web",
+      "from_knowledge": "💬 from knowledge",
+      "send_message_label": "Send message",
+      "rate_limit_wait": "Please wait {seconds}s before sending another message",
+      "input_placeholder_nova": "Ask Nova anything about science & tech...",
+      "input_placeholder_atlas": "Ask Atlas about markets & finance...",
+      "input_placeholder_lex": "Ask Lex about laws & legal concepts...",
+      "input_placeholder_sage": "Ask Sage to explain anything simply...",
+      "input_placeholder_pulse": "Ask Pulse about world news & events...",
+      "errors": {
+        "history_load_failed": "Couldn't load your conversation history",
+        "history_retry": "Retry",
+        "rate_limited": "Please wait before sending another message",
+        "unavailable": "{name} is unavailable right now, try again in a moment"
+      }
+    },
     "navbar": {
       "app_name": "Chat App",
       "home": "Home",
       "friends": "Friends",
+      "explore": "AI Experts",
       "profile": "Profile",
       "buttons": {
         "logout": "Logout"

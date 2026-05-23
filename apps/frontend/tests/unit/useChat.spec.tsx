@@ -59,10 +59,16 @@ vi.mock("../../src/shared/utils/toast", () => ({
   },
 }));
 
-vi.mock("../../src/features/auth/store/useAuthStore", () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  useAuthStore: vi.fn((selector: any) => selector({ user: { id: "user-1" } })),
-}));
+vi.mock("../../src/features/auth/store/useAuthStore", () => {
+  const getState = vi.fn(() => ({ user: { id: "user-1" } }));
+  return {
+    useAuthStore: Object.assign(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.fn((selector: any) => selector({ user: { id: "user-1" } })),
+      { getState },
+    ),
+  };
+});
 
 vi.mock("next/navigation", () => ({
   useRouter: vi.fn(() => ({
@@ -1033,7 +1039,7 @@ describe("useAiAgent", () => {
     );
   });
 
-  it("shows bottom-center red toast on blocked injection error", async () => {
+  it("injects blocked injection reply as AI message in cache (no toast)", async () => {
     const { toast } = await import("sonner");
     const error = Object.assign(new Error("Blocked"), {
       isAxiosError: true,
@@ -1048,7 +1054,12 @@ describe("useAiAgent", () => {
     });
     vi.mocked(chatService.triggerAiAgent).mockRejectedValue(error);
 
-    const { Wrapper } = makeWrapper();
+    const { queryClient, Wrapper } = makeWrapper();
+    queryClient.setQueryData<InfiniteData<MessageListResponse>>(
+      ["messages", "conv-1"],
+      emptyMessagesCache,
+    );
+
     const { result } = renderHook(() => useAiAgent("conv-1"), {
       wrapper: Wrapper,
     });
@@ -1059,16 +1070,18 @@ describe("useAiAgent", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
-    expect(vi.mocked(toast)).toHaveBeenCalledWith(
-      "⚠️ That kind of instruction isn't something I can follow.",
-      expect.objectContaining({
-        position: "bottom-center",
-        style: expect.objectContaining({ background: "#ef4444" }),
-      }),
+    const cached = queryClient.getQueryData<InfiniteData<MessageListResponse>>([
+      "messages",
+      "conv-1",
+    ]);
+    expect(cached?.pages[0].data[0].isAI).toBe(true);
+    expect(cached?.pages[0].data[0].content).toContain(
+      "That kind of instruction",
     );
+    expect(vi.mocked(toast)).not.toHaveBeenCalled();
   });
 
-  it("shows bottom-center amber toast on blocked codeGen error", async () => {
+  it("injects blocked codeGen reply as AI message in cache (no toast)", async () => {
     const { toast } = await import("sonner");
     const error = Object.assign(new Error("Blocked"), {
       isAxiosError: true,
@@ -1083,7 +1096,12 @@ describe("useAiAgent", () => {
     });
     vi.mocked(chatService.triggerAiAgent).mockRejectedValue(error);
 
-    const { Wrapper } = makeWrapper();
+    const { queryClient, Wrapper } = makeWrapper();
+    queryClient.setQueryData<InfiniteData<MessageListResponse>>(
+      ["messages", "conv-1"],
+      emptyMessagesCache,
+    );
+
     const { result } = renderHook(() => useAiAgent("conv-1"), {
       wrapper: Wrapper,
     });
@@ -1094,13 +1112,13 @@ describe("useAiAgent", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
-    expect(vi.mocked(toast)).toHaveBeenCalledWith(
-      "🛠️ I can't write code.",
-      expect.objectContaining({
-        position: "bottom-center",
-        style: expect.objectContaining({ background: "#f59e0b" }),
-      }),
-    );
+    const cached = queryClient.getQueryData<InfiniteData<MessageListResponse>>([
+      "messages",
+      "conv-1",
+    ]);
+    expect(cached?.pages[0].data[0].isAI).toBe(true);
+    expect(cached?.pages[0].data[0].content).toContain("I can't write code");
+    expect(vi.mocked(toast)).not.toHaveBeenCalled();
   });
 
   it("calls showToast.error on a generic (non-axios) error", async () => {

@@ -7,7 +7,7 @@ import { useChatStore } from "../../src/features/chat/store/useChatStore";
 
 describe("AiThinkingIndicator", () => {
   beforeEach(() => {
-    useChatStore.setState({ typingUsers: {} });
+    useChatStore.setState({ typingUsers: {}, agentThinking: {} });
   });
 
   it("is not visible when typingUsers for the conversation does not include AI", () => {
@@ -27,14 +27,14 @@ describe("AiThinkingIndicator", () => {
     expect(screen.queryByText(/AI is thinking/)).toBeNull();
   });
 
-  it("renders the thinking indicator when typingUsers includes AI", () => {
-    useChatStore.setState({ typingUsers: { "conv-1": ["AI"] } });
+  it("renders the thinking indicator when AI is thinking", () => {
+    useChatStore.setState({ agentThinking: { "conv-1": true } });
     renderWithIntl(<AiThinkingIndicator conversationId="conv-1" />);
-    expect(screen.getByText("🤖 AI is thinking")).toBeTruthy();
+    expect(screen.getByText("🤖 AI is thinking...")).toBeTruthy();
   });
 
   it("renders animated dots when AI is thinking", () => {
-    useChatStore.setState({ typingUsers: { "conv-1": ["AI"] } });
+    useChatStore.setState({ agentThinking: { "conv-1": true } });
     const { container } = renderWithIntl(
       <AiThinkingIndicator conversationId="conv-1" />,
     );
