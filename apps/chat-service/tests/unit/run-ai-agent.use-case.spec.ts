@@ -149,7 +149,7 @@ describe("RunAiAgentUseCase (Unit)", () => {
         message: "@AI weather in Tokyo",
       });
 
-      const createArg = messageRepo.create.firstCall.args[0];
+      const createArg = messageRepo.create.lastCall.args[0];
       expect(createArg.isAI).to.equal(true);
       expect(createArg.toolUsed).to.equal("get_weather");
       expect(createArg.agentQuery).to.equal("weather in Tokyo");
@@ -190,7 +190,7 @@ describe("RunAiAgentUseCase (Unit)", () => {
         message: "@AI hello there",
       });
 
-      const createArg = messageRepo.create.firstCall.args[0];
+      const createArg = messageRepo.create.lastCall.args[0];
       expect(createArg.toolUsed).to.equal("direct");
       expect(createArg.isAI).to.equal(true);
     });
@@ -212,9 +212,10 @@ describe("RunAiAgentUseCase (Unit)", () => {
       });
 
       const calls = presenceGateway.emitToRoom.args.map((a: unknown[]) => a[1]);
-      expect(calls[0]).to.equal("typing.started");
-      expect(calls[1]).to.equal("typing.stopped");
-      expect(calls[2]).to.equal("ai.message.new");
+      expect(calls[0]).to.equal("message.new");
+      expect(calls[1]).to.equal("typing.started");
+      expect(calls[2]).to.equal("typing.stopped");
+      expect(calls[3]).to.equal("ai.message.new");
     });
 
     it("should pass agentQuery stripped of @AI prefix to aiAgent.run", async () => {

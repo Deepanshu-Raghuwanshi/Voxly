@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   friendsService,
   FriendRequest,
@@ -81,6 +82,7 @@ export const useSearchUsers = (query: string) => {
 
 export const useSendFriendRequest = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations("features.friends");
 
   return useMutation({
     mutationFn: (receiverId: string) =>
@@ -151,7 +153,7 @@ export const useSendFriendRequest = () => {
         queryClient.setQueryData(queryKey, data);
       }
       const message = err.response?.data?.message ?? "Failed to send friend request";
-      showToast.error("Could not send friend request", message);
+      showToast.error(t("errors.send_request_failed"), message);
     },
 
     // Always refetch after error or success:

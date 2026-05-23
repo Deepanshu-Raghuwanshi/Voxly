@@ -64,7 +64,7 @@ export const ProfileFeature = ({
 
           {isOwnProfile && (
             <section>
-              <SecuritySection userId={userId} />
+              <SecuritySection />
             </section>
           )}
 

@@ -34,7 +34,7 @@ describe("GetPersonaHistoryUseCase", () => {
       save: sinon.stub(),
       findByUserAndPersona: sinon.stub().resolves(MOCK_MESSAGES),
       deleteByUserAndPersona: sinon.stub(),
-    };
+    } as unknown as sinon.SinonStubbedInstance<PersonaMessageRepository>;
     useCase = new GetPersonaHistoryUseCase(
       repoStub as unknown as PersonaMessageRepository,
     );

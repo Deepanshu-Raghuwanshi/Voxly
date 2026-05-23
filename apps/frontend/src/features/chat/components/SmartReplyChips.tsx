@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import { Message } from "@shared-types";
 import { cn } from "../../../shared/utils/cn";
+import { useTranslations } from "next-intl";
 import { useSmartReplies } from "../hooks/useChat";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../../auth/store/useAuthStore";
@@ -16,6 +17,7 @@ export const SmartReplyChips = ({
   conversationId,
   messages,
 }: SmartReplyChipsProps) => {
+  const t = useTranslations("features.chat.smart_replies");
   const currentUserId = useAuthStore((state) => state.user?.id ?? "");
   const draft = useChatStore(
     (state) => state.draftMessages[conversationId] ?? "",
@@ -54,7 +56,7 @@ export const SmartReplyChips = ({
 
   if (isLoading) {
     return (
-      <div className="px-4 py-2 flex gap-2 shrink-0" role="status" aria-label="Loading smart replies">
+      <div className="px-4 py-2 flex gap-2 shrink-0" role="status" aria-label={t("loading_label")}>
         {[0, 1, 2].map((i) => (
           <div
             key={i}
@@ -70,7 +72,7 @@ export const SmartReplyChips = ({
   if (isError || !validSuggestions.length) return null;
 
   return (
-    <div className="px-4 py-2 flex gap-2 overflow-x-auto shrink-0" aria-label="Smart reply suggestions">
+    <div className="px-4 py-2 flex gap-2 overflow-x-auto shrink-0" aria-label={t("suggestions_label")}>
       {validSuggestions.map((suggestion, i) => (
         <button
           key={i}

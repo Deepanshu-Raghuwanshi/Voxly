@@ -63,9 +63,9 @@ export const ResetPasswordForm = () => {
   if (isSuccess) {
     return (
       <div className="flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border border-blue-100 text-center animate-in fade-in zoom-in duration-500">
+        <div className="w-full max-w-md bg-card p-8 rounded-2xl shadow-xl border border-border text-center animate-in fade-in zoom-in duration-500">
           <div className="mb-6 flex justify-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
               <CheckCircle2 className="w-10 h-10 text-green-600" />
             </div>
           </div>
@@ -81,7 +81,7 @@ export const ResetPasswordForm = () => {
 
   return (
     <div className="flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border border-blue-100 animate-in fade-in slide-up duration-500">
+      <div className="w-full max-w-md bg-card p-8 rounded-2xl shadow-xl border border-border animate-in fade-in slide-up duration-500">
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-foreground mb-2">{t('title')}</h1>
           <p className="text-foreground/60">{t('subtitle')}</p>
@@ -98,7 +98,7 @@ export const ResetPasswordForm = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t('password_placeholder')}
-                className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-white"
+                className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-background"
                 required
                 disabled={isPending}
               />
@@ -123,7 +123,7 @@ export const ResetPasswordForm = () => {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder={t('confirm_password_placeholder')}
-                className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-white"
+                className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-background"
                 required
                 disabled={isPending}
               />

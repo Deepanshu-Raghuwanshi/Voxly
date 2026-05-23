@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { useTranslations } from "next-intl";
 import { PersonaId, PERSONAS } from "@shared-utils";
 import { personaService } from "../services/persona.service";
 import { usePersonaStore } from "../store/usePersonaStore";
@@ -25,6 +26,7 @@ export const usePersonaHistory = (personaId: PersonaId) => {
 
 export const usePersonaChat = (personaId: PersonaId) => {
   const persona = PERSONAS[personaId];
+  const t = useTranslations("features.persona");
   const appendMessage = usePersonaStore((s) => s.appendMessage);
   const setLoading = usePersonaStore((s) => s.setLoading);
   const setRateLimit = usePersonaStore((s) => s.setRateLimit);
@@ -67,7 +69,7 @@ export const usePersonaChat = (personaId: PersonaId) => {
         appendMessage(personaId, {
           id: `err-${Date.now()}`,
           role: "assistant",
-          content: `${persona.name} is unavailable right now, try again in a moment`,
+          content: t("errors.unavailable", { name: persona.name }),
           toolUsed: null,
           createdAt: new Date().toISOString(),
         });
@@ -85,7 +87,7 @@ export const usePersonaChat = (personaId: PersonaId) => {
           blocked: true,
           secondsLeft: secondsRemaining,
         });
-        showToast.error(msg || "Please wait before sending another message");
+        showToast.error(msg || t("errors.rate_limited"));
         if (secondsRemaining > 0) {
           setTimeout(() => {
             setRateLimit(personaId, { blocked: false, secondsLeft: 0 });
@@ -108,7 +110,7 @@ export const usePersonaChat = (personaId: PersonaId) => {
       appendMessage(personaId, {
         id: `err-${Date.now()}`,
         role: "assistant",
-        content: `${persona.name} is unavailable right now, try again in a moment`,
+        content: t("errors.unavailable", { name: persona.name }),
         toolUsed: null,
         createdAt: new Date().toISOString(),
       });

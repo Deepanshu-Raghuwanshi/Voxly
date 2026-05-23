@@ -13,7 +13,7 @@ describe("ClearPersonaHistoryUseCase", () => {
       save: sinon.stub(),
       findByUserAndPersona: sinon.stub(),
       deleteByUserAndPersona: sinon.stub().resolves(5),
-    };
+    } as unknown as sinon.SinonStubbedInstance<PersonaMessageRepository>;
     useCase = new ClearPersonaHistoryUseCase(
       repoStub as unknown as PersonaMessageRepository,
     );

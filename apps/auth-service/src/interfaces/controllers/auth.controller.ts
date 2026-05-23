@@ -1,9 +1,8 @@
-import { Controller, Post, Body, Get, UseGuards, Req, Res, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req, Res, UnauthorizedException, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import { RegisterDto, LoginDto } from '@shared-types';
-import { User } from '@prisma/client-auth';
 import { AuthUseCases, GoogleProfile } from '../../application/use-cases/auth.use-cases';
 
 @Controller('auth')
@@ -44,9 +43,8 @@ async register(@Body() dto: RegisterDto) {
 
   @Post('change-email')
   @UseGuards(AuthGuard('jwt'))
-  async changeEmail(@Req() req: Request, @Body() body: { newEmail: string }) {
-    const user = req.user as User;
-    return this.authUseCases.changeEmail(user.id, body.newEmail);
+  async changeEmail() {
+    throw new ForbiddenException('Email change is disabled');
   }
 
   @Post('verify-email-change')

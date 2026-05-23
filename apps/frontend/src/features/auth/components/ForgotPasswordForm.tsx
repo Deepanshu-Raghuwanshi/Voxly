@@ -48,7 +48,7 @@ export const ForgotPasswordForm = () => {
   return (
     <div className="flex items-center justify-center p-4">
       <div className="w-120 max-w-130 animate-in fade-in slide-up duration-500">
-        <div className="bg-white rounded-2xl shadow-xl border border-blue-100 overflow-hidden">
+        <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
           <div className="bg-gradient-to-r from-primary to-blue-600 p-8 text-center">
             <h1 className="text-3xl font-bold text-white mb-2">{t('title')}</h1>
             <p className="text-blue-100">{t('subtitle')}</p>
@@ -57,7 +57,7 @@ export const ForgotPasswordForm = () => {
           <div className="p-8">
             {isSuccess ? (
               <div className="text-center space-y-6 py-4">
-                <div className="bg-green-50 border border-green-100 p-4 rounded-xl text-green-800 text-sm">
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 rounded-xl text-green-800 dark:text-green-300 text-sm">
                   {t('success.message')}
                 </div>
                 <button
@@ -80,7 +80,7 @@ export const ForgotPasswordForm = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder={t('email_placeholder')}
-                      className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-white"
+                      className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-background"
                       required
                       disabled={isPending}
                     />
