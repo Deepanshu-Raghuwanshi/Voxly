@@ -27,6 +27,7 @@ A fully-featured, real-time 1:1 chat application built with a **microservices ar
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
 - [Testing](#testing)
+- [Future Scope](#future-scope)
 
 ---
 
@@ -126,7 +127,7 @@ graph TD
         AuthSvc["auth-service\n:3001\nJWT • bcrypt • Google OAuth\nPrisma → PostgreSQL"]
         UserSvc["user-service\n:3002\nFriends • Profile • Presence\nPrisma → PostgreSQL"]
         ChatSvc["chat-service\n:3003\nMessages • Reactions • Rooms\nMongoose → MongoDB"]
-        NotifSvc["notification-service\n:3004\nEmail via Nodemailer\nHandlebars templates"]
+        NotifSvc["notification-service\n:3005\nEmail via Nodemailer\nHandlebars templates"]
     end
 
     subgraph RealtimeLayer["Real-time Layer"]
@@ -317,7 +318,7 @@ User sends "@AI weather in Tokyo"
 ## Project Structure
 
 ```
-chat-system/                        ← NX monorepo root
+chat_app/                           ← NX monorepo root
 ├── apps/
 │   ├── frontend/                   ← Next.js 15 App Router
 │   │   ├── app/                    ← Pages (login, chat, explore, profile, friends)
@@ -333,11 +334,16 @@ chat-system/                        ← NX monorepo root
 │   ├── auth-service/               ← JWT + OAuth, email verification (:3001)
 │   ├── user-service/               ← Friends, profile, presence (:3002)
 │   ├── chat-service/               ← Messages, Socket.io, AI pipeline (:3003)
-│   └── notification-service/       ← Transactional email (:3004)
+│   └── notification-service/       ← Transactional email (:3005)
 ├── libs/
 │   ├── shared-types/               ← TypeScript types shared across all apps
-│   └── shared-utils/               ← Persona configs, HTTP helpers
-├── libs/openapi-specs/             ← OpenAPI YAML specs per service
+│   ├── shared-utils/               ← Persona configs, HTTP helpers
+│   ├── shared-config/              ← Common NestJS config modules
+│   ├── shared-exceptions/          ← Global exception filters and HTTP errors
+│   ├── shared-logger/              ← Pino logger setup
+│   ├── shared-validation/          ← Reusable validation pipes and schemas
+│   ├── kafka-events/               ← Kafka event topic/payload definitions
+│   └── openapi-specs/              ← OpenAPI YAML specs per service
 ├── docs/specs/                     ← Feature requirement specs (14 features documented)
 ├── docker-compose.yml              ← PostgreSQL, MongoDB, Redis, Kafka
 └── tools/scripts/                  ← OpenAPI type generator
@@ -379,6 +385,7 @@ Required third-party keys:
 | `OPENWEATHER_API_KEY` | [openweathermap.org](https://openweathermap.org/api) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google Cloud Console |
 | `CLOUDINARY_*` | [cloudinary.com](https://cloudinary.com) |
+| `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | Any SMTP provider (e.g. Gmail) — optional, required for email verification and password reset |
 
 ### 3. Start infrastructure
 
@@ -433,6 +440,49 @@ pnpm nx typecheck chat-service
 ```
 
 **272 frontend tests** across 38 test files covering components, hooks, stores, and service integrations.
+
+---
+
+## Future Scope
+
+### 1. Push & In-App Notifications
+
+The `notification-service` is scaffolded (DDD directory structure, health endpoint) but contains no implementation. The intended architecture — Kafka event → notification-service consumer → email/push dispatch — is not wired. Email for auth flows (verification, password reset) currently lives directly inside `auth-service`.
+
+What needs to be built:
+- Kafka consumer inside `notification-service` listening on `message.sent` and `friend.request.received`
+- In-app notification center: bell icon in the navbar, unread count badge, dismissable notification history
+- Browser push notifications (Web Push API / FCM) for new messages when the tab is in the background
+- Offline email digest: "You have 3 unread messages from X" sent via the existing Nodemailer setup
+
+This is the most self-contained next step — the Kafka events are already published by `chat-service` and `user-service`; only the consumer side is missing.
+
+---
+
+### 2. Group Chats
+
+1:1 is the only conversation type. Group chat is the core architectural feature most technical interviewers will probe — it forces problems that bilateral messaging sidesteps entirely:
+
+- **Fan-out messaging:** a single `message.sent` event must be delivered to N participants, not just one recipient
+- **Role-based permissions:** admin vs. member (add/remove members, rename group, delete messages)
+- **Multi-user real-time sync:** join/leave events, live member list, per-member read receipts
+- **Schema changes:** conversations gain a `participants[]` array and `adminId`; the existing MongoDB message schema extends cleanly
+
+Being able to describe "I built group chat with proper broadcast architecture" in an interview is worth more than any number of polish features.
+
+---
+
+### 3. RAG Memory for @AI Agent
+
+Once group chats exists, adding Retrieval-Augmented Generation transforms the `@AI` agent from "calls web search" to "can reason over your entire conversation history" — a qualitatively different capability.
+
+Implementation path:
+- **Embed on write:** generate a vector embedding for each message on persist (e.g. a free Groq-hosted or `text-embedding-3-small` model)
+- **Vector store:** ChromaDB (self-hosted via Docker) or Pinecone free tier
+- **Retrieve on query:** at `@AI` invocation, run a semantic similarity search over the conversation's embeddings and inject the top-K results as context into Turn 1 of the agentic loop
+- **Unlocks queries like:** "@AI what did we decide about the deadline last week?" or "@AI summarise everything we discussed about the API design"
+
+This is the feature that makes a senior engineer lean forward in a technical interview — it combines real-time inference, vector search, and a working agentic loop into a single coherent system.
 
 ---
 
