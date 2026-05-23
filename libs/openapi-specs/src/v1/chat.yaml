@@ -579,6 +579,129 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /api/v1/chat/persona/chat:
+    post:
+      summary: Send a message to an AI expert persona
+      description: >
+        Validates the message against guardrail patterns, applies per-user rate limiting
+        (1 call per 5 seconds cooldown + max 20 calls per hour across all personas),
+        fetches the last 8 PersonaMessages from the database for context, runs a two-turn
+        Groq LLM agent loop with persona-specific system prompt and optional web_search tool,
+        persists both the user message and assistant reply to the PersonaMessage collection,
+        and returns the AI reply.
+
+        Personas that use web search (nova, atlas, lex, pulse) run a full two-turn loop.
+        Sage runs a single-turn loop with no tools — answers from LLM knowledge only.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PersonaChatDto"
+      responses:
+        "200":
+          description: AI persona reply
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonaChatResponse"
+        "400":
+          description: >
+            Invalid personaId, empty message, message over 600 characters, or query
+            matched a guardrail pattern (injection, credentials, code generation).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonaBlockedResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "429":
+          description: >
+            Rate limit exceeded — either the 5-second per-message cooldown or the
+            20-messages-per-hour hourly limit has been reached.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonaRateLimitedResponse"
+        "503":
+          description: Groq LLM or Tavily web search unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/chat/persona/history/{personaId}:
+    get:
+      summary: Get conversation history with a persona
+      description: >
+        Returns up to 50 saved PersonaMessage documents for the authenticated user
+        and the specified persona, ordered oldest-first for display in the chat UI.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/personaId"
+      responses:
+        "200":
+          description: Persona conversation history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonaHistoryResponse"
+        "400":
+          description: Invalid personaId (not one of the 5 valid values)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Clear conversation history with a persona
+      description: >
+        Permanently deletes all PersonaMessage documents for the authenticated user
+        and the specified persona. Idempotent — returns success even if no messages existed.
+        Used by the "New conversation" button in the persona chat view.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/personaId"
+      responses:
+        "200":
+          description: History cleared
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - deleted
+                properties:
+                  deleted:
+                    type: integer
+                    minimum: 0
+                    description: Number of PersonaMessage documents deleted
+        "400":
+          description: Invalid personaId
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/v1/chat/ai/rewrite:
     post:
       summary: Rewrite a draft message using AI
@@ -648,6 +771,14 @@ components:
       schema:
         type: string
         format: uuid
+    personaId:
+      name: personaId
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [nova, atlas, lex, sage, pulse]
+        description: One of the 5 AI expert personas
 
   schemas:
     ErrorResponse:
@@ -1101,6 +1232,122 @@ components:
         message:
           type: string
           description: Human-readable message to show in a toast (e.g. "Slow down! Try again in 7 seconds ⏳").
+
+    PersonaId:
+      type: string
+      enum: [nova, atlas, lex, sage, pulse]
+      description: One of the 5 AI expert personas.
+
+    PersonaChatDto:
+      type: object
+      required:
+        - personaId
+        - message
+      properties:
+        personaId:
+          $ref: "#/components/schemas/PersonaId"
+        message:
+          type: string
+          minLength: 1
+          maxLength: 600
+          description: >
+            The user's message to the persona. Blocked if it exceeds 600 chars or
+            matches a guardrail pattern (injection, credentials, code generation).
+
+    PersonaMessageItem:
+      type: object
+      required:
+        - id
+        - role
+        - content
+        - createdAt
+      properties:
+        id:
+          type: string
+          description: MongoDB ObjectId of the message.
+        role:
+          type: string
+          enum: [user, assistant]
+          description: Who sent this message — the human user or the AI persona.
+        content:
+          type: string
+        toolUsed:
+          type: string
+          enum: [web_search, direct]
+          nullable: true
+          description: >
+            Set only on assistant messages. "web_search" when Tavily was invoked.
+            "direct" when the LLM answered from knowledge. Null on user messages.
+        createdAt:
+          type: string
+          format: date-time
+
+    PersonaChatResponse:
+      type: object
+      required:
+        - reply
+        - personaId
+      properties:
+        reply:
+          type: string
+          description: The persona's text reply.
+        personaId:
+          $ref: "#/components/schemas/PersonaId"
+        toolUsed:
+          type: string
+          enum: [web_search, direct]
+          nullable: true
+          description: Which tool (if any) was used to generate the reply.
+
+    PersonaHistoryResponse:
+      type: object
+      required:
+        - personaId
+        - messages
+      properties:
+        personaId:
+          $ref: "#/components/schemas/PersonaId"
+        messages:
+          type: array
+          description: Up to 50 messages ordered oldest-first.
+          items:
+            $ref: "#/components/schemas/PersonaMessageItem"
+
+    PersonaBlockedResponse:
+      type: object
+      required:
+        - blocked
+        - category
+        - message
+      properties:
+        blocked:
+          type: boolean
+          description: Always true — discriminator field for the frontend.
+        category:
+          type: string
+          enum: [injection, credentials, codeGen, too_long, empty]
+          description: Which guardrail pattern matched.
+        message:
+          type: string
+          description: Human-readable reason to display inline in the chat.
+
+    PersonaRateLimitedResponse:
+      type: object
+      required:
+        - rateLimited
+        - secondsRemaining
+        - message
+      properties:
+        rateLimited:
+          type: boolean
+          description: Always true — discriminator field for the frontend.
+        secondsRemaining:
+          type: integer
+          minimum: 1
+          description: Seconds until the user may send another message to any persona.
+        message:
+          type: string
+          description: Human-readable message shown to the user (e.g. "You've reached the hourly limit. Come back in 42 minutes ⏳").
 
 # Kafka Events
 # Produces: message.sent.v1        — payload includes optional replyTo: { messageId, senderId, content } when message is a quoted reply

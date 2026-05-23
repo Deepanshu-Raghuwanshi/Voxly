@@ -77,7 +77,7 @@ describe("GroqSummaryService (Unit)", () => {
       await service.summarize(MESSAGES);
 
       const call = createStub.firstCall.args[0];
-      expect(call.model).to.equal("llama-3.3-70b-versatile");
+      expect(call.model).to.equal("meta-llama/llama-4-scout-17b-16e-instruct");
     });
 
     it("should send a system message as the first message", async () => {

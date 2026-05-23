@@ -24,6 +24,7 @@ import { KafkaProducerService } from "./infrastructure/messaging/kafka-producer.
 import { JwtStrategy } from "./infrastructure/strategies/jwt.strategy";
 import { ConversationController } from "./interfaces/controllers/conversation.controller";
 import { AiController } from "./interfaces/controllers/ai.controller";
+import { PersonaController } from "./interfaces/controllers/persona.controller";
 import { RewriteMessageUseCase } from "./application/use-cases/rewrite-message.use-case";
 import { GenerateSmartRepliesUseCase } from "./application/use-cases/generate-smart-replies.use-case";
 import { GroqRewriteService } from "./infrastructure/ai/groq-rewrite.service";
@@ -51,6 +52,16 @@ import { ToggleReactionUseCase } from "./application/use-cases/toggle-reaction.u
 import { SummarizeConversationUseCase } from "./application/use-cases/summarize-conversation.use-case";
 import { RunAiAgentUseCase } from "./application/use-cases/run-ai-agent.use-case";
 import { AgentRateLimiterService } from "./infrastructure/ai/agent-rate-limiter.service";
+import {
+  PersonaMessage,
+  PersonaMessageSchema,
+} from "./infrastructure/persistence/mongoose/schemas/persona-message.schema";
+import { MongoosePersonaMessageRepository } from "./infrastructure/persistence/mongoose/mongoose-persona-message.repository";
+import { PersonaGroqAgentService } from "./infrastructure/ai/persona-groq-agent.service";
+import { PersonaRateLimiterService } from "./infrastructure/ai/persona-rate-limiter.service";
+import { RunPersonaAgentUseCase } from "./application/use-cases/run-persona-agent.use-case";
+import { GetPersonaHistoryUseCase } from "./application/use-cases/get-persona-history.use-case";
+import { ClearPersonaHistoryUseCase } from "./application/use-cases/clear-persona-history.use-case";
 import { GroqAgentService } from "./infrastructure/ai/groq-agent.service";
 import { TavilyWebSearchService } from "./infrastructure/ai/tavily-web-search.service";
 import { OpenWeatherService } from "./infrastructure/ai/openweather.service";
@@ -69,6 +80,7 @@ import { UserProfileUpdatesConsumer } from "./infrastructure/messaging/user-prof
         schema: ConversationParticipantSchema,
       },
       { name: Message.name, schema: MessageSchema },
+      { name: PersonaMessage.name, schema: PersonaMessageSchema },
     ]),
     PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.registerAsync({
@@ -99,7 +111,7 @@ import { UserProfileUpdatesConsumer } from "./infrastructure/messaging/user-prof
       },
     ]),
   ],
-  controllers: [ConversationController, AiController],
+  controllers: [ConversationController, AiController, PersonaController],
   providers: [
     // Application services
     ConversationViewBuilder,
@@ -155,6 +167,17 @@ import { UserProfileUpdatesConsumer } from "./infrastructure/messaging/user-prof
     RunAiAgentUseCase,
     AgentRateLimiterService,
     UserThrottlerGuard,
+
+    // Persona AI
+    PersonaGroqAgentService,
+    PersonaRateLimiterService,
+    RunPersonaAgentUseCase,
+    GetPersonaHistoryUseCase,
+    ClearPersonaHistoryUseCase,
+    {
+      provide: "PersonaMessageRepository",
+      useClass: MongoosePersonaMessageRepository,
+    },
 
     // Repository bindings
     {

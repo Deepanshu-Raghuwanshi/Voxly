@@ -900,6 +900,191 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/chat/persona/chat": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Send a message to an AI expert persona
+     * @description Validates the message against guardrail patterns, applies per-user rate limiting (1 call per 5 seconds cooldown + max 20 calls per hour across all personas), fetches the last 8 PersonaMessages from the database for context, runs a two-turn Groq LLM agent loop with persona-specific system prompt and optional web_search tool, persists both the user message and assistant reply to the PersonaMessage collection, and returns the AI reply.
+     *     Personas that use web search (nova, atlas, lex, pulse) run a full two-turn loop. Sage runs a single-turn loop with no tools — answers from LLM knowledge only.
+     */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["PersonaChatDto"];
+        };
+      };
+      responses: {
+        /** @description AI persona reply */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["PersonaChatResponse"];
+          };
+        };
+        /** @description Invalid personaId, empty message, message over 600 characters, or query matched a guardrail pattern (injection, credentials, code generation). */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["PersonaBlockedResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Rate limit exceeded — either the 5-second per-message cooldown or the 20-messages-per-hour hourly limit has been reached. */
+        429: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["PersonaRateLimitedResponse"];
+          };
+        };
+        /** @description Groq LLM or Tavily web search unavailable */
+        503: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/chat/persona/history/{personaId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /**
+     * Get conversation history with a persona
+     * @description Returns up to 50 saved PersonaMessage documents for the authenticated user and the specified persona, ordered oldest-first for display in the chat UI.
+     */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          personaId: components["parameters"]["personaId"];
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Persona conversation history */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["PersonaHistoryResponse"];
+          };
+        };
+        /** @description Invalid personaId (not one of the 5 valid values) */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    /**
+     * Clear conversation history with a persona
+     * @description Permanently deletes all PersonaMessage documents for the authenticated user and the specified persona. Idempotent — returns success even if no messages existed. Used by the "New conversation" button in the persona chat view.
+     */
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          personaId: components["parameters"]["personaId"];
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description History cleared */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              /** @description Number of PersonaMessage documents deleted */
+              deleted: number;
+            };
+          };
+        };
+        /** @description Invalid personaId */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/chat/ai/rewrite": {
     parameters: {
       query?: never;
@@ -1037,7 +1222,7 @@ export interface components {
       isDeleted: boolean;
       isEdited?: boolean;
       /**
-       * @description True when this message was generated by the AI agent, not typed by a human.
+       * @description True when this message was generated by the AI agent, not typed by a human. NOTE: `default: false` causes openapi-typescript to render this as `isAI: boolean` (required) rather than `isAI?: boolean` (optional). This is intentional — the Mongoose schema also defaults to false, so the API always returns a value. Any code constructing a Message object must include `isAI: false` for human messages.
        * @default false
        */
       isAI: boolean;
@@ -1217,11 +1402,73 @@ export interface components {
       /** @description Human-readable message to show in a toast (e.g. "Slow down! Try again in 7 seconds ⏳"). */
       message: string;
     };
+    /**
+     * @description One of the 5 AI expert personas.
+     * @enum {string}
+     */
+    PersonaId: "nova" | "atlas" | "lex" | "sage" | "pulse";
+    PersonaChatDto: {
+      personaId: components["schemas"]["PersonaId"];
+      /** @description The user's message to the persona. Blocked if it exceeds 600 chars or matches a guardrail pattern (injection, credentials, code generation). */
+      message: string;
+    };
+    PersonaMessageItem: {
+      /** @description MongoDB ObjectId of the message. */
+      id: string;
+      /**
+       * @description Who sent this message — the human user or the AI persona.
+       * @enum {string}
+       */
+      role: "user" | "assistant";
+      content: string;
+      /**
+       * @description Set only on assistant messages. "web_search" when Tavily was invoked. "direct" when the LLM answered from knowledge. Null on user messages.
+       * @enum {string|null}
+       */
+      toolUsed?: "web_search" | "direct" | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    PersonaChatResponse: {
+      /** @description The persona's text reply. */
+      reply: string;
+      personaId: components["schemas"]["PersonaId"];
+      /**
+       * @description Which tool (if any) was used to generate the reply.
+       * @enum {string|null}
+       */
+      toolUsed?: "web_search" | "direct" | null;
+    };
+    PersonaHistoryResponse: {
+      personaId: components["schemas"]["PersonaId"];
+      /** @description Up to 50 messages ordered oldest-first. */
+      messages: components["schemas"]["PersonaMessageItem"][];
+    };
+    PersonaBlockedResponse: {
+      /** @description Always true — discriminator field for the frontend. */
+      blocked: boolean;
+      /**
+       * @description Which guardrail pattern matched.
+       * @enum {string}
+       */
+      category: "injection" | "credentials" | "codeGen" | "too_long" | "empty";
+      /** @description Human-readable reason to display inline in the chat. */
+      message: string;
+    };
+    PersonaRateLimitedResponse: {
+      /** @description Always true — discriminator field for the frontend. */
+      rateLimited: boolean;
+      /** @description Seconds until the user may send another message to any persona. */
+      secondsRemaining: number;
+      /** @description Human-readable message shown to the user (e.g. "You've reached the hourly limit. Come back in 42 minutes ⏳"). */
+      message: string;
+    };
   };
   responses: never;
   parameters: {
     conversationId: string;
     messageId: string;
+    personaId: "nova" | "atlas" | "lex" | "sage" | "pulse";
   };
   requestBodies: never;
   headers: never;

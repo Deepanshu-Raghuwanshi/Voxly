@@ -118,6 +118,8 @@ beforeEach(() => {
     setReplyTarget: vi.fn(),
     setHighlightedMessageId: vi.fn(),
     setTyping: vi.fn(),
+    agentThinking: {},
+    setAgentThinking: vi.fn(),
     composerFocusTokens: {},
     requestComposerFocus: vi.fn(),
   });
@@ -207,6 +209,8 @@ describe("usePresence — message.new auto-read", () => {
       setReplyTarget: vi.fn(),
       setHighlightedMessageId: vi.fn(),
       setTyping: vi.fn(),
+      agentThinking: {},
+      setAgentThinking: vi.fn(),
       composerFocusTokens: {},
       requestComposerFocus: vi.fn(),
     });
@@ -230,6 +234,8 @@ describe("usePresence — message.new auto-read", () => {
       setReplyTarget: vi.fn(),
       setHighlightedMessageId: vi.fn(),
       setTyping: vi.fn(),
+      agentThinking: {},
+      setAgentThinking: vi.fn(),
       composerFocusTokens: {},
       requestComposerFocus: vi.fn(),
     });
@@ -256,6 +262,8 @@ describe("usePresence — typing.started / typing.stopped", () => {
       setReplyTarget: vi.fn(),
       setHighlightedMessageId: vi.fn(),
       setTyping: setTypingMock,
+      agentThinking: {},
+      setAgentThinking: vi.fn(),
       composerFocusTokens: {},
       requestComposerFocus: vi.fn(),
     });
@@ -283,6 +291,8 @@ describe("usePresence — typing.started / typing.stopped", () => {
       setReplyTarget: vi.fn(),
       setHighlightedMessageId: vi.fn(),
       setTyping: setTypingMock,
+      agentThinking: {},
+      setAgentThinking: vi.fn(),
       composerFocusTokens: {},
       requestComposerFocus: vi.fn(),
     });

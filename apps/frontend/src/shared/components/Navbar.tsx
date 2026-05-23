@@ -3,7 +3,7 @@
 import React from "react";
 import { useLogout } from "../../features/auth/hooks/useAuth";
 import { useAuthStore } from "../../features/auth/store/useAuthStore";
-import { LogOut, MessageSquare, Home, Users } from "lucide-react";
+import { LogOut, MessageSquare, Home, Users, Sparkles } from "lucide-react";
 import { Spinner } from "./ui/spinner";
 import { Avatar } from "./ui/Avatar";
 import { ThemeToggle } from "./ThemeToggle";
@@ -26,6 +26,7 @@ export const Navbar = () => {
   const navItems = [
     { icon: Home, label: t("home"), href: "/chat" },
     { icon: Users, label: t("friends"), href: "/friends" },
+    { icon: Sparkles, label: t("explore"), href: "/explore" },
   ];
 
   return (

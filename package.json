@@ -13,7 +13,6 @@
     "start:auth-service": "nx serve auth-service",
     "start:user-service": "nx serve user-service",
     "start:chat-service": "nx serve chat-service",
-    "start:message-service": "nx serve message-service",
     "start:notification-service": "nx serve notification-service",
     "start:frontend": "nx serve frontend",
     "prisma:migrate:auth": "pnpm prisma migrate dev --name auth_migration --schema apps/auth-service/prisma/schema.prisma --url \"postgresql://postgres:postgres@localhost:5432/chat_db?schema=auth\"",
