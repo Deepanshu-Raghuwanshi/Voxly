@@ -6,6 +6,6 @@ dotenv.config({ path: "../../.env", override: true });
 export default defineConfig({
   schema: "prisma/schema.prisma",
   datasource: {
-    url: process.env.DATABASE_URL!,
+    url: process.env.AUTH_DATABASE_URL!,
   },
 });

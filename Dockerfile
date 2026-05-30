@@ -52,7 +52,8 @@ ENV APP_NAME=${APP_NAME}
 
 # ✅ prisma generate
 RUN if [ -f "apps/${APP_NAME}/prisma/schema.prisma" ]; then \
-      DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" \
+      AUTH_DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" \
+      USER_DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" \
       pnpm prisma generate --config=apps/${APP_NAME}/prisma.config.ts; \
     fi
 
