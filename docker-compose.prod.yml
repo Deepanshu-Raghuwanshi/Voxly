@@ -14,7 +14,7 @@ services:
       - zookeeper_log:/var/lib/zookeeper/log
     restart: always
     healthcheck:
-      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/commands/ruok || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
