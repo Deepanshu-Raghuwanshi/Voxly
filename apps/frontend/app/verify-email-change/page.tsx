@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useProfile } from '../../src/features/profile/hooks/useProfile';
@@ -8,7 +8,7 @@ import { Spinner } from '../../src/shared/components/ui/spinner';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
-const VerifyEmailChangePage = () => {
+const VerifyEmailChangeContent = () => {
   const t = useTranslations('features.auth.verify_email');
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -79,4 +79,10 @@ const VerifyEmailChangePage = () => {
   );
 };
 
-export default VerifyEmailChangePage;
+export default function VerifyEmailChangePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <VerifyEmailChangeContent />
+    </Suspense>
+  );
+}
