@@ -10,14 +10,15 @@ export class RedisPresenceRepository implements PresenceRepository, OnModuleInit
   private readonly PRESENCE_PREFIX = 'presence:';
 
   constructor(private configService: ConfigService) {
-    const host = this.configService.get<string>('REDIS_HOST');
-    const port = this.configService.get<number>('REDIS_PORT');
-    const password = this.configService.get<string>('REDIS_PASSWORD');
-
-    const url = password 
-      ? `redis://:${password}@${host}:${port}`
-      : `redis://${host}:${port}`;
-
+    const redisUrl = this.configService.get<string>('REDIS_URL');
+    const url = redisUrl ?? (() => {
+      const host = this.configService.get<string>('REDIS_HOST');
+      const port = this.configService.get<number>('REDIS_PORT');
+      const password = this.configService.get<string>('REDIS_PASSWORD');
+      return password
+        ? `redis://:${password}@${host}:${port}`
+        : `redis://${host}:${port}`;
+    })();
     this.client = createClient({ url });
   }
 
