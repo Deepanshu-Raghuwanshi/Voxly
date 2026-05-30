@@ -50,6 +50,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=4200
 ENV HOSTNAME="0.0.0.0"
 
+# NEXT_PUBLIC_* vars are inlined at build time by Next.js — pass them as build args
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_CHAT_SERVICE_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+ENV NEXT_PUBLIC_CHAT_SERVICE_URL=${NEXT_PUBLIC_CHAT_SERVICE_URL}
+
 # Use cache mount for Nx
 RUN --mount=type=cache,id=nx,target=/app/.nx/cache \
     pnpm nx build frontend --configuration=production
