@@ -21,7 +21,6 @@ COPY nx.json tsconfig.base.json ./
 COPY apps/api-gateway/project.json ./apps/api-gateway/
 COPY apps/auth-service/project.json ./apps/auth-service/
 COPY apps/chat-service/project.json ./apps/chat-service/
-COPY apps/message-service/project.json ./apps/message-service/
 COPY apps/notification-service/project.json ./apps/notification-service/
 COPY apps/user-service/project.json ./apps/user-service/
 COPY apps/frontend/project.json ./apps/frontend/
