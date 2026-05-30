@@ -16,10 +16,15 @@ async function bootstrap() {
 
   // WebSocket Adapter
   const redisIoAdapter = new RedisIoAdapter(app);
-  const redisHost = process.env.REDIS_HOST || "localhost";
-  const redisPort = parseInt(process.env.REDIS_PORT || "6379", 10);
-  const redisPassword = process.env.REDIS_PASSWORD;
-  await redisIoAdapter.connectToRedis(redisHost, redisPort, redisPassword);
+  const redisUrl = process.env.REDIS_URL ?? (() => {
+    const host = process.env.REDIS_HOST || "localhost";
+    const port = process.env.REDIS_PORT || "6379";
+    const password = process.env.REDIS_PASSWORD;
+    return password
+      ? `redis://:${password}@${host}:${port}`
+      : `redis://${host}:${port}`;
+  })();
+  await redisIoAdapter.connectToRedis(redisUrl);
   app.useWebSocketAdapter(redisIoAdapter);
 
   app.useGlobalFilters(new GlobalExceptionFilter());

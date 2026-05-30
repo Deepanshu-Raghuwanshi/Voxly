@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["user_service"]
+  schemas  = ["chat_user"]
 }
 
 model UserProfile {
@@ -26,7 +26,7 @@ model UserProfile {
 
   @@index([fullName])
   @@map("UserProfile")
-  @@schema("user_service")
+  @@schema("chat_user")
 }
 
 enum FriendRequestStatus {
@@ -34,7 +34,7 @@ enum FriendRequestStatus {
   ACCEPTED
   REJECTED
 
-  @@schema("user_service")
+  @@schema("chat_user")
 }
 
 model FriendRequest {
@@ -48,7 +48,7 @@ model FriendRequest {
   @@unique([senderId, receiverId]) // Prevent duplicate requests
   @@index([receiverId, status]) // Speed up fetching incoming requests
   @@map("FriendRequest")
-  @@schema("user_service")
+  @@schema("chat_user")
 }
 
 model Friendship {
@@ -61,5 +61,5 @@ model Friendship {
   @@index([userId1])
   @@index([userId2])
   @@map("Friendship")
-  @@schema("user_service")
+  @@schema("chat_user")
 }

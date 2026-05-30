@@ -1,0 +1,20 @@
+{
+  "name": "api-gateway",
+  "private": true,
+  "dependencies": {
+    "@nestjs/common": "*",
+    "@nestjs/config": "*",
+    "@nestjs/core": "*",
+    "@nestjs/platform-express": "*",
+    "@nestjs/swagger": "*",
+    "@nestjs/terminus": "*",
+    "axios": "*",
+    "class-transformer": "*",
+    "class-validator": "*",
+    "cookie-parser": "*",
+    "express": "*",
+    "nestjs-pino": "*",
+    "pino": "*",
+    "zod": "*"
+  }
+}

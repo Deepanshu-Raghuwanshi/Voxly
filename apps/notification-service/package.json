@@ -1,0 +1,17 @@
+{
+  "name": "notification-service",
+  "private": true,
+  "dependencies": {
+    "@nestjs/common": "*",
+    "@nestjs/config": "*",
+    "@nestjs/core": "*",
+    "@nestjs/platform-express": "*",
+    "@nestjs/swagger": "*",
+    "@nestjs/terminus": "*",
+    "class-transformer": "*",
+    "class-validator": "*",
+    "nestjs-pino": "*",
+    "pino": "*",
+    "zod": "*"
+  }
+}
