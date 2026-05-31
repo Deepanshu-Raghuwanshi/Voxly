@@ -12,6 +12,7 @@ import {
   FriendTopics,
   FriendRemovedEventV1,
   FriendRequestSentEventV1,
+  FriendRequestAcceptedEventV1,
   MessageSentEventV1,
   MessageDeliveredEventV1,
   MessageEditedEventV1,
@@ -50,6 +51,7 @@ export class ChatGateway implements OnModuleInit, OnModuleDestroy {
         ChatTopics.MESSAGE_REACTION_TOGGLED,
         FriendTopics.FRIEND_REMOVED,
         FriendTopics.FRIEND_REQUEST_SENT,
+        FriendTopics.FRIEND_REQUEST_ACCEPTED,
       ],
       fromBeginning: false,
     });
@@ -152,6 +154,19 @@ export class ChatGateway implements OnModuleInit, OnModuleDestroy {
       this.presenceGateway.emitToRoom(
         `user:${event.receiverId}`,
         "friend.request.received",
+        event,
+      );
+    } else if (topic === FriendTopics.FRIEND_REQUEST_ACCEPTED) {
+      if (!p.senderId || !p.receiverId) return;
+      const event = p as unknown as FriendRequestAcceptedEventV1;
+      this.presenceGateway.emitToRoom(
+        `user:${event.senderId}`,
+        "friend.request.accepted",
+        event,
+      );
+      this.presenceGateway.emitToRoom(
+        `user:${event.receiverId}`,
+        "friend.request.accepted",
         event,
       );
     }
