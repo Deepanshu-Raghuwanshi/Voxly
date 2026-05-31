@@ -55,7 +55,7 @@ import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
           },
         },
         defaults: {
-          from: '"No Reply" <noreply@chatapp.com>',
+          from: `"Voxyl" <${config.get('SMTP_USER')}>`,
         },
         template: {
           dir: join(__dirname, 'infrastructure/messaging/templates'),
