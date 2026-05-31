@@ -66,7 +66,7 @@ export class GatewayController {
           host: new URL(targetUrlBase).host,
         },
         params: req.query,
-        validateStatus: (status: number) => status >= 200 && status < 500,
+        validateStatus: () => true,
         maxRedirects: 0,
         withCredentials: true,
         maxContentLength: Infinity,
