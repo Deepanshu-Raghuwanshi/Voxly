@@ -167,7 +167,7 @@ export class AuthUseCases {
           email: profile.email,
           googleId: profile.googleId,
           provider: 'GOOGLE',
-          isVerified: true, // Google users are auto-verified
+          isVerified: true,
         },
       });
 
@@ -175,11 +175,21 @@ export class AuthUseCases {
         id: user.id,
         email: user.email,
       });
+    } else {
+      // Existing user signing in via Google — Google has verified the email,
+      // so mark isVerified true and link Google identity if not already linked.
+      const updates: { isVerified: boolean; googleId?: string; provider?: 'GOOGLE' | 'BOTH' } = {
+        isVerified: true,
+      };
+      if (!user.googleId) updates.googleId = profile.googleId;
+      if (user.provider === 'LOCAL') updates.provider = 'BOTH';
+
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: updates,
+      });
     }
 
-    // If user exists but has no password, ensure they get a password setup email
-    // This handles the case where the user was created but email failed, 
-    // or they're logging in again but haven't set a password yet.
     if (!user.password) {
       const token = await this.generatePasswordResetToken(user.id);
       try {
