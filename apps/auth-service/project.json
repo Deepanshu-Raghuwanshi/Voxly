@@ -6,7 +6,7 @@
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/dist/apps/auth-service"],
       "options": {
-        "command": "pnpm tsc -p tsconfig.auth-service.json && pnpm tsc-alias -p tsconfig.auth-service.json"
+        "command": "pnpm tsc -p tsconfig.auth-service.json && pnpm tsc-alias -p tsconfig.auth-service.json && cp -r apps/auth-service/src/infrastructure/messaging/templates dist/apps/auth-service/src/infrastructure/messaging/templates"
       }
     },
     "lint": {},
