@@ -4,9 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useLogin, useForgotPassword } from '../hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { showToast } from '../../../shared/utils/toast';
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 import { Spinner } from '../../../shared/components/ui/spinner';
 import { useTranslations } from 'next-intl';
+import { useResendVerification } from '../hooks/useAuth';
 
 export const LoginForm = () => {
   const t = useTranslations('features.auth.login');
@@ -14,18 +15,29 @@ export const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isUnverified, setIsUnverified] = useState(false);
   const router = useRouter();
   const { mutate: login, isPending, error: loginError } = useLogin();
   const { mutate: forgotPassword, isPending: isForgotPasswordPending } = useForgotPassword();
+  const { mutate: resendVerification, isPending: isResending } = useResendVerification();
 
   useEffect(() => {
     if (loginError) {
       const errorMsg = loginError && typeof loginError === 'object' && 'response' in loginError
-        ? (loginError as { response: { data: { message: string } } }).response?.data?.message 
+        ? (loginError as { response: { data: { message: string } } }).response?.data?.message
         : loginError instanceof Error ? loginError.message : t('toasts.login_failed');
-      showToast.error(t('toasts.login_failed'), errorMsg);
+      if (errorMsg === 'Please verify your email first') {
+        setIsUnverified(true);
+      } else {
+        setIsUnverified(false);
+        showToast.error(t('toasts.login_failed'), errorMsg);
+      }
     }
   }, [loginError, t]);
+
+  useEffect(() => {
+    setIsUnverified(false);
+  }, [email]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +51,17 @@ export const LoginForm = () => {
   const handleGoogleLogin = () => {
     showToast.loading(t('toasts.google_redirect'));
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/auth/google`;
+  };
+
+  const handleResendVerification = () => {
+    resendVerification(email, {
+      onSuccess: () => {
+        showToast.success(t('resend_success_title'), t('resend_success_desc'));
+      },
+      onError: () => {
+        showToast.error(t('toasts.login_failed'), t('resend_failed'));
+      },
+    });
   };
 
   const handleForgotPassword = () => {
@@ -124,6 +147,24 @@ export const LoginForm = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Unverified email banner */}
+              {isUnverified && (
+                <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 p-3 flex items-start gap-3">
+                  <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                  <div className="flex-1 text-sm">
+                    <p className="text-amber-800 dark:text-amber-300 font-medium">{t('unverified_banner')}</p>
+                    <button
+                      type="button"
+                      onClick={handleResendVerification}
+                      disabled={isResending}
+                      className="text-amber-700 dark:text-amber-400 underline mt-1 disabled:opacity-50"
+                    >
+                      {isResending ? t('resend_verification_sending') : t('resend_verification')}
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Submit Button */}
               <button

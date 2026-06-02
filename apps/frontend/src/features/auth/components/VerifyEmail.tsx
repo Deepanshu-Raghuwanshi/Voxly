@@ -55,7 +55,7 @@ export const VerifyEmail = () => {
   return (
     <div className="flex items-center justify-center p-4">
       <div className="w-full max-w-md animate-in fade-in slide-up duration-500">
-        <div className="bg-white rounded-2xl shadow-xl border border-blue-100 overflow-hidden">
+        <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
           {status === 'loading' && (
             <>
               <div className="bg-gradient-to-r from-primary to-blue-600 p-8 text-center">
@@ -118,7 +118,7 @@ export const VerifyEmail = () => {
                   </button>
                   <button
                     onClick={() => router.push('/login')}
-                    className="w-full py-3 border-2 border-primary text-primary rounded-lg hover:bg-blue-50 transition-all duration-300 font-medium"
+                    className="w-full py-3 border-2 border-primary text-primary rounded-lg hover:bg-secondary transition-all duration-300 font-medium"
                   >
                     {t('error.button_login')}
                   </button>

@@ -1,7 +1,7 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSignup } from '../hooks/useAuth';
+import { useSignup, useResendVerification } from '../hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { showToast } from '../../../shared/utils/toast';
 import { Eye, EyeOff, Mail, Lock, CheckCircle, ArrowRight } from 'lucide-react';
@@ -16,8 +16,11 @@ export const SignupForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(60);
+  const [canResend, setCanResend] = useState(false);
   const router = useRouter();
   const { mutate: signup, isPending, isSuccess, error: signupError } = useSignup();
+  const { mutate: resendVerification, isPending: isResending } = useResendVerification();
 
   useEffect(() => {
     setMounted(true);
@@ -26,6 +29,19 @@ export const SignupForm = () => {
   useEffect(() => {
     if (isSuccess) {
       showToast.success(t('toasts.account_created'), t('toasts.verification_sent', { email }));
+      setResendCooldown(60);
+      setCanResend(false);
+      const timer = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
     }
   }, [isSuccess, email, t]);
 
@@ -37,6 +53,22 @@ export const SignupForm = () => {
       showToast.error(t('toasts.signup_failed'), errorMsg);
     }
   }, [signupError, t]);
+
+  const handleResend = () => {
+    resendVerification(email, {
+      onSuccess: () => {
+        showToast.success(t('toasts.account_created'), t('success.resend_success'));
+        setResendCooldown(60);
+        setCanResend(false);
+        const timer = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) { clearInterval(timer); setCanResend(true); return 0; }
+            return prev - 1;
+          });
+        }, 1000);
+      },
+    });
+  };
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +89,7 @@ export const SignupForm = () => {
     return (
       <div className="flex items-center justify-center p-4">
         <div className="w-120 max-w-130 animate-in slide-up duration-500">
-          <div className="bg-white rounded-2xl shadow-xl border border-blue-100 overflow-hidden">
+          <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
             <div className="bg-gradient-to-r from-primary to-blue-600 p-6 text-center">
               <div className="flex justify-center mb-4">
                 <CheckCircle className="w-16 h-16 text-white animate-bounce" />
@@ -77,6 +109,21 @@ export const SignupForm = () => {
                 {t('success.go_to_login')}
                 <ArrowRight className="w-4 h-4" />
               </button>
+              <p className="text-sm text-foreground/60 mt-4">
+                {t('success.resend_prompt')}{' '}
+                {canResend ? (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={isResending}
+                    className="text-primary font-semibold hover:underline disabled:opacity-50"
+                  >
+                    {isResending ? t('success.resend_sending') : t('success.resend_button')}
+                  </button>
+                ) : (
+                  <span className="text-foreground/40">{t('success.resend_cooldown', { seconds: resendCooldown })}</span>
+                )}
+              </p>
             </div>
           </div>
         </div>
@@ -87,7 +134,7 @@ export const SignupForm = () => {
   return (
     <div className="flex items-center justify-center p-4">
       <div className="w-120 max-w-130 animate-in fade-in slide-up duration-500">
-        <div className="bg-white rounded-2xl shadow-xl border border-blue-100 overflow-hidden">
+        <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
           <div className="bg-gradient-to-r from-primary to-blue-600 p-8 text-center">
             <h1 className="text-3xl font-bold text-white mb-2">{t('title')}</h1>
             <p className="text-blue-100">{t('subtitle')}</p>
@@ -106,7 +153,7 @@ export const SignupForm = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={t('email_placeholder')}
-                    className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-white"
+                    className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-background text-foreground"
                     required
                     disabled={isPending}
                   />
@@ -124,7 +171,7 @@ export const SignupForm = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={t('password_placeholder')}
-                    className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-white"
+                    className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-background text-foreground"
                     required
                     disabled={isPending}
                   />
@@ -150,7 +197,7 @@ export const SignupForm = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder={t('confirm_password_placeholder')}
-                    className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-white"
+                    className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-background text-foreground"
                     required
                     disabled={isPending}
                   />

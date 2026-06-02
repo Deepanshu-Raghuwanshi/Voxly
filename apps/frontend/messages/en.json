@@ -31,6 +31,12 @@
         "google_login": "Google",
         "no_account": "Don't have an account?",
         "sign_up": "Sign Up",
+        "unverified_banner": "Your email is not verified yet.",
+        "resend_verification": "Resend verification email",
+        "resend_verification_sending": "Sending...",
+        "resend_success_title": "Email sent",
+        "resend_success_desc": "A new verification link has been sent to your email.",
+        "resend_failed": "Failed to resend verification email",
         "toasts": {
           "login_failed": "Login failed",
           "email_sent": "Email sent",
@@ -56,7 +62,12 @@
           "title": "Verify Your Email",
           "sent_to": "A verification link has been sent to",
           "instruction": "Click the link in the email to activate your account and sign in.",
-          "go_to_login": "Go to Login"
+          "go_to_login": "Go to Login",
+          "resend_prompt": "Didn't receive the email?",
+          "resend_button": "Resend email",
+          "resend_sending": "Sending...",
+          "resend_cooldown": "Resend in {seconds}s",
+          "resend_success": "Verification email resent! Check your inbox."
         },
         "errors": {
           "password_mismatch": "Passwords do not match",

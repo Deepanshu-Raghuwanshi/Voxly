@@ -54,7 +54,11 @@ export class AuthUseCases {
     });
 
     const verificationToken = await this.generateEmailVerificationToken(user.id);
-    await this.emailService.sendVerificationEmail(user.email, verificationToken);
+    try {
+      await this.emailService.sendVerificationEmail(user.email, verificationToken);
+    } catch (error) {
+      console.error(`Failed to send verification email to ${user.email}:`, error);
+    }
 
     await this.userEventsProducer.emitUserCreated({
       id: user.id,
@@ -63,6 +67,17 @@ export class AuthUseCases {
 
     return { id: user.id, email: user.email };
   }
+  async resendVerificationEmail(email: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    // Don't leak whether the account exists or is already verified
+    if (!user || user.isVerified || user.provider === 'GOOGLE') {
+      return { message: 'If an unverified account exists for this email, a new verification link has been sent.' };
+    }
+    const token = await this.generateEmailVerificationToken(user.id);
+    await this.emailService.sendVerificationEmail(user.email, token);
+    return { message: 'If an unverified account exists for this email, a new verification link has been sent.' };
+  }
+
   async verifyEmail(token: string) {
     const verification = await this.prisma.emailVerification.findUnique({
       where: { token },
