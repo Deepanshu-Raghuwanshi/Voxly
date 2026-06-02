@@ -54,7 +54,11 @@ export class AuthUseCases {
     });
 
     const verificationToken = await this.generateEmailVerificationToken(user.id);
-    await this.emailService.sendVerificationEmail(user.email, verificationToken);
+    try {
+      await this.emailService.sendVerificationEmail(user.email, verificationToken);
+    } catch (error) {
+      console.error(`Failed to send verification email to ${user.email}:`, error);
+    }
 
     await this.userEventsProducer.emitUserCreated({
       id: user.id,
