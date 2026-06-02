@@ -5,7 +5,10 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { SignupForm } from '../../src/features/auth/components/SignupForm';
 import { simulate } from '../utils/simulate';
 import { useRouter } from 'next/navigation';
-import { useSignup } from '../../src/features/auth/hooks/useAuth';
+import {
+  useSignup,
+  useResendVerification,
+} from '../../src/features/auth/hooks/useAuth';
 import { showToast } from '../../src/shared/utils/toast';
 
 // Mock next-intl
@@ -39,6 +42,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('../../src/features/auth/hooks/useAuth', () => ({
   useSignup: vi.fn(),
+  useResendVerification: vi.fn(),
 }));
 
 vi.mock('../../src/shared/utils/toast', () => ({
@@ -61,6 +65,10 @@ describe('SignupForm', () => {
       isPending: false,
       isSuccess: false,
       error: null,
+    } as any);
+    vi.mocked(useResendVerification).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
     } as any);
   });
 

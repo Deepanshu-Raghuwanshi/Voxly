@@ -4,471 +4,475 @@
  */
 
 export interface paths {
-    "/api/v1/profile": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get current user profile */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description User profile */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["UserProfile"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update user profile */
-        patch: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["UpdateProfileRequest"];
-                };
-            };
-            responses: {
-                /** @description Profile updated */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["UserProfile"];
-                    };
-                };
-                /** @description Validation error */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
-        trace?: never;
+  "/api/v1/profile": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/profile/avatar": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /** Get current user profile */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description User profile */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["UserProfile"];
+          };
         };
-        get?: never;
-        put?: never;
-        /** Upload profile picture */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "multipart/form-data": {
-                        /** Format: binary */
-                        file?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Avatar uploaded */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            avatarUrl?: string;
-                        };
-                    };
-                };
-            };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
-    "/api/v1/users/{userId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** Update user profile */
+    patch: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": components["schemas"]["UpdateProfileRequest"];
         };
-        /** Get user profile by ID */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    userId: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description User profile */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["UserProfile"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Profile not found */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
+      };
+      responses: {
+        /** @description Profile updated */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["UserProfile"];
+          };
         };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        /** @description Validation error */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
     };
-    "/api/v1/friends": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List all friends */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of friend IDs */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    trace?: never;
+  };
+  "/api/v1/profile/avatar": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/friends/requests": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    get?: never;
+    put?: never;
+    /** Upload profile picture */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "multipart/form-data": {
+            /** Format: binary */
+            file?: string;
+          };
         };
-        get?: never;
-        put?: never;
-        /** Send friend request */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
+      };
+      responses: {
+        /** @description Avatar uploaded */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": {
+              avatarUrl?: string;
             };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        receiverId?: string;
-                    };
-                };
-            };
-            responses: {
-                /** @description Request sent */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
+          };
         };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+      };
     };
-    "/api/v1/friends/search": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Search users by username or full name */
-        get: {
-            parameters: {
-                query: {
-                    /** @description Search query (minimum 2 characters). Matches partial username or full name, case-insensitive. */
-                    q: string;
-                };
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of all matching users (excludes the requesting user only). Each result includes a relationshipStatus field indicating whether the matched user is already a friend, has a pending request in either direction, or has no relationship with the requester. */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["UserSearchResult"][];
-                    };
-                };
-                /** @description Query too short or missing */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-                /** @description Unauthorized */
-                401: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/users/{userId}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
-    "/api/v1/friends/requests/incoming": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
+    /** Get user profile by ID */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          userId: string;
         };
-        /** Get incoming friend requests */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description List of incoming requests */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description User profile */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["UserProfile"];
+          };
         };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Profile not found */
+        404: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
     };
-    "/api/v1/friends/requests/{requestId}/respond": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Respond to friend request */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    requestId: string;
-                };
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        /** @enum {string} */
-                        action?: "ACCEPT" | "REJECT";
-                    };
-                };
-            };
-            responses: {
-                /** @description Response recorded */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content?: never;
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/friends": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
     };
+    /** List all friends */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description List of friend IDs */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/friends/requests": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Send friend request */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            receiverId?: string;
+          };
+        };
+      };
+      responses: {
+        /** @description Request sent */
+        201: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/friends/search": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Search users by username or full name */
+    get: {
+      parameters: {
+        query: {
+          /** @description Search query (minimum 2 characters). Matches partial username or full name, case-insensitive. */
+          q: string;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description List of all matching users (excludes the requesting user only). Each result includes a relationshipStatus field indicating whether the matched user is already a friend, has a pending request in either direction, or has no relationship with the requester. */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["UserSearchResult"][];
+          };
+        };
+        /** @description Query too short or missing */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["ErrorResponse"];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/friends/requests/incoming": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get incoming friend requests */
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description List of incoming requests */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/friends/requests/{requestId}/respond": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** Respond to friend request */
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          requestId: string;
+        };
+        cookie?: never;
+      };
+      requestBody: {
+        content: {
+          "application/json": {
+            /** @enum {string} */
+            action?: "ACCEPT" | "REJECT";
+          };
+        };
+      };
+      responses: {
+        /** @description Response recorded */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: {
-        ErrorResponse: {
-            statusCode?: number;
-            /** Format: date-time */
-            timestamp?: string;
-            path?: string;
-            method?: string;
-            error?: string;
-            message?: string;
-        };
-        /**
-         * @description Relationship between the requesting user and a search result. friend: already connected. pending_outgoing: requester sent a request awaiting response. pending_incoming: the matched user sent a request to the requester. none: no relationship.
-         * @enum {string}
-         */
-        RelationshipStatus: "friend" | "pending_incoming" | "pending_outgoing" | "none";
-        UserSearchResult: components["schemas"]["UserProfile"] & {
-            relationshipStatus: components["schemas"]["RelationshipStatus"];
-        };
-        /**
-         * @description User's preferred UI theme. Persisted on the backend and restored on every login.
-         * @default light
-         * @enum {string}
-         */
-        Theme: "light" | "dark";
-        UpdateProfileRequest: {
-            fullName?: string;
-            bio?: string;
-            phoneNumber?: string;
-            countryCode?: string;
-            status?: string;
-            theme?: components["schemas"]["Theme"];
-        };
-        UserProfile: {
-            /** Format: uuid */
-            id: string;
-            username: string;
-            /** Format: email */
-            email?: string;
-            fullName?: string;
-            avatarUrl?: string;
-            bio?: string;
-            phoneNumber?: string;
-            countryCode?: string;
-            status?: string;
-            isOnline?: boolean;
-            theme?: components["schemas"]["Theme"];
-        };
-        FriendRequest: {
-            id?: string;
-            senderId?: string;
-            receiverId?: string;
-            /** @enum {string} */
-            status?: "PENDING" | "ACCEPTED" | "REJECTED";
-            /** Format: date-time */
-            createdAt?: string;
-            /** Format: date-time */
-            updatedAt?: string;
-            sender?: components["schemas"]["UserProfile"];
-            receiver?: components["schemas"]["UserProfile"];
-        };
+  schemas: {
+    ErrorResponse: {
+      statusCode?: number;
+      /** Format: date-time */
+      timestamp?: string;
+      path?: string;
+      method?: string;
+      error?: string;
+      message?: string;
     };
-    responses: never;
-    parameters: never;
-    requestBodies: never;
-    headers: never;
-    pathItems: never;
+    /**
+     * @description Relationship between the requesting user and a search result. friend: already connected. pending_outgoing: requester sent a request awaiting response. pending_incoming: the matched user sent a request to the requester. none: no relationship.
+     * @enum {string}
+     */
+    RelationshipStatus:
+      | "friend"
+      | "pending_incoming"
+      | "pending_outgoing"
+      | "none";
+    UserSearchResult: components["schemas"]["UserProfile"] & {
+      relationshipStatus: components["schemas"]["RelationshipStatus"];
+    };
+    /**
+     * @description User's preferred UI theme. Persisted on the backend and restored on every login.
+     * @default light
+     * @enum {string}
+     */
+    Theme: "light" | "dark";
+    UpdateProfileRequest: {
+      fullName?: string;
+      bio?: string;
+      phoneNumber?: string;
+      countryCode?: string;
+      status?: string;
+      theme?: components["schemas"]["Theme"];
+    };
+    UserProfile: {
+      /** Format: uuid */
+      id: string;
+      username: string;
+      /** Format: email */
+      email?: string;
+      fullName?: string;
+      avatarUrl?: string;
+      bio?: string;
+      phoneNumber?: string;
+      countryCode?: string;
+      status?: string;
+      isOnline?: boolean;
+      theme?: components["schemas"]["Theme"];
+    };
+    FriendRequest: {
+      id?: string;
+      senderId?: string;
+      receiverId?: string;
+      /** @enum {string} */
+      status?: "PENDING" | "ACCEPTED" | "REJECTED";
+      /** Format: date-time */
+      createdAt?: string;
+      /** Format: date-time */
+      updatedAt?: string;
+      sender?: components["schemas"]["UserProfile"];
+      receiver?: components["schemas"]["UserProfile"];
+    };
+  };
+  responses: never;
+  parameters: never;
+  requestBodies: never;
+  headers: never;
+  pathItems: never;
 }
 export type $defs = Record<string, never>;
 export type operations = Record<string, never>;

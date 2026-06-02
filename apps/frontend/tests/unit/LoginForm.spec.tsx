@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import {
   useLogin,
   useForgotPassword,
+  useResendVerification,
 } from "../../src/features/auth/hooks/useAuth";
 import { showToast } from "../../src/shared/utils/toast";
 
@@ -47,6 +48,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("../../src/features/auth/hooks/useAuth", () => ({
   useLogin: vi.fn(),
   useForgotPassword: vi.fn(),
+  useResendVerification: vi.fn(),
 }));
 
 vi.mock("../../src/shared/utils/toast", () => ({
@@ -81,6 +83,10 @@ describe("LoginForm", () => {
       mutate: mockForgotPassword,
       isPending: false,
     } as unknown as ReturnType<typeof useForgotPassword>);
+    vi.mocked(useResendVerification).mockReturnValue({
+      mutate: vi.fn(),
+      isPending: false,
+    } as unknown as ReturnType<typeof useResendVerification>);
   });
 
   it("renders login form correctly", () => {
