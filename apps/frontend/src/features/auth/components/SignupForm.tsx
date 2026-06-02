@@ -57,7 +57,7 @@ export const SignupForm = () => {
     return (
       <div className="flex items-center justify-center p-4">
         <div className="w-120 max-w-130 animate-in slide-up duration-500">
-          <div className="bg-white rounded-2xl shadow-xl border border-blue-100 overflow-hidden">
+          <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
             <div className="bg-gradient-to-r from-primary to-blue-600 p-6 text-center">
               <div className="flex justify-center mb-4">
                 <CheckCircle className="w-16 h-16 text-white animate-bounce" />
@@ -87,7 +87,7 @@ export const SignupForm = () => {
   return (
     <div className="flex items-center justify-center p-4">
       <div className="w-120 max-w-130 animate-in fade-in slide-up duration-500">
-        <div className="bg-white rounded-2xl shadow-xl border border-blue-100 overflow-hidden">
+        <div className="bg-card rounded-2xl shadow-xl border border-border overflow-hidden">
           <div className="bg-gradient-to-r from-primary to-blue-600 p-8 text-center">
             <h1 className="text-3xl font-bold text-white mb-2">{t('title')}</h1>
             <p className="text-blue-100">{t('subtitle')}</p>
@@ -106,7 +106,7 @@ export const SignupForm = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder={t('email_placeholder')}
-                    className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-white"
+                    className="w-full pl-10 pr-4 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-background text-foreground"
                     required
                     disabled={isPending}
                   />
@@ -124,7 +124,7 @@ export const SignupForm = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder={t('password_placeholder')}
-                    className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-white"
+                    className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-background text-foreground"
                     required
                     disabled={isPending}
                   />
@@ -150,7 +150,7 @@ export const SignupForm = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder={t('confirm_password_placeholder')}
-                    className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-white"
+                    className="w-full pl-10 pr-10 py-2.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 bg-background text-foreground"
                     required
                     disabled={isPending}
                   />
