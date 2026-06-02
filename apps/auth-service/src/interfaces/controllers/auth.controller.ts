@@ -20,6 +20,12 @@ async register(@Body() dto: RegisterDto) {
   }
 }
 
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Post('resend-verification')
+  async resendVerification(@Body() body: { email: string }) {
+    return this.authUseCases.resendVerificationEmail(body.email);
+  }
+
   @Get('verify-email')
   async verifyEmail(@Req() req: Request) {
     const token = req.query.token as string;

@@ -32,6 +32,11 @@ export const authService = {
     return response.data;
   },
 
+  async resendVerificationEmail(email: string) {
+    const response = await apiClient.post('/auth/resend-verification', { email });
+    return response.data;
+  },
+
   async forgotPassword(email: string) {
     const response = await apiClient.post('/auth/forgot-password', { email });
     return response.data;

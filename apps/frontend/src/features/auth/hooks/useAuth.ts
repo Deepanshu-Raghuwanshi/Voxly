@@ -73,6 +73,12 @@ export const useSetPassword = () => {
   });
 };
 
+export const useResendVerification = () => {
+  return useMutation({
+    mutationFn: (email: string) => authService.resendVerificationEmail(email),
+  });
+};
+
 export const useForgotPassword = () => {
   return useMutation({
     mutationFn: (email: string) => authService.forgotPassword(email),

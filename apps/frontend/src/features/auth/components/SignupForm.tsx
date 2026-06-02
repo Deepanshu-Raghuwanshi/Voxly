@@ -1,7 +1,7 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSignup } from '../hooks/useAuth';
+import { useSignup, useResendVerification } from '../hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { showToast } from '../../../shared/utils/toast';
 import { Eye, EyeOff, Mail, Lock, CheckCircle, ArrowRight } from 'lucide-react';
@@ -16,8 +16,11 @@ export const SignupForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(60);
+  const [canResend, setCanResend] = useState(false);
   const router = useRouter();
   const { mutate: signup, isPending, isSuccess, error: signupError } = useSignup();
+  const { mutate: resendVerification, isPending: isResending } = useResendVerification();
 
   useEffect(() => {
     setMounted(true);
@@ -26,6 +29,19 @@ export const SignupForm = () => {
   useEffect(() => {
     if (isSuccess) {
       showToast.success(t('toasts.account_created'), t('toasts.verification_sent', { email }));
+      setResendCooldown(60);
+      setCanResend(false);
+      const timer = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
     }
   }, [isSuccess, email, t]);
 
@@ -37,6 +53,22 @@ export const SignupForm = () => {
       showToast.error(t('toasts.signup_failed'), errorMsg);
     }
   }, [signupError, t]);
+
+  const handleResend = () => {
+    resendVerification(email, {
+      onSuccess: () => {
+        showToast.success(t('toasts.account_created'), t('success.resend_success'));
+        setResendCooldown(60);
+        setCanResend(false);
+        const timer = setInterval(() => {
+          setResendCooldown((prev) => {
+            if (prev <= 1) { clearInterval(timer); setCanResend(true); return 0; }
+            return prev - 1;
+          });
+        }, 1000);
+      },
+    });
+  };
 
   const handleSignup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,6 +109,21 @@ export const SignupForm = () => {
                 {t('success.go_to_login')}
                 <ArrowRight className="w-4 h-4" />
               </button>
+              <p className="text-sm text-foreground/60 mt-4">
+                {t('success.resend_prompt')}{' '}
+                {canResend ? (
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={isResending}
+                    className="text-primary font-semibold hover:underline disabled:opacity-50"
+                  >
+                    {isResending ? t('success.resend_sending') : t('success.resend_button')}
+                  </button>
+                ) : (
+                  <span className="text-foreground/40">{t('success.resend_cooldown', { seconds: resendCooldown })}</span>
+                )}
+              </p>
             </div>
           </div>
         </div>
