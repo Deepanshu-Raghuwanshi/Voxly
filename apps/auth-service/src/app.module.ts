@@ -55,7 +55,7 @@ import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
           },
         },
         defaults: {
-          from: `"Voxyl" <${config.get('SMTP_USER')}>`,
+          from: config.get('SMTP_FROM') || '"Voxyl" <onboarding@resend.dev>',
         },
         template: {
           dir: join(__dirname, 'infrastructure/messaging/templates'),

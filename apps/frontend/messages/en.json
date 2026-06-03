@@ -39,8 +39,8 @@
         "resend_failed": "Failed to resend verification email",
         "toasts": {
           "login_failed": "Login failed",
-          "email_sent": "Email sent",
-          "reset_link_sent": "A password reset link has been sent to your email.",
+          "email_sent": "Check your email",
+          "reset_link_sent": "If an account exists for this email, a reset link is on its way.",
           "missing_fields_desc": "Please enter both email and password",
           "google_redirect": "Redirecting to Google..."
         }
@@ -89,9 +89,12 @@
         "sending_link": "Sending Link...",
         "back_to_login": "Back to Login",
         "success": {
-          "message": "Check your inbox for a password reset link. It will expire in 30 minutes.",
-          "toast_title": "Email sent",
-          "toast_desc": "If an account exists, you will receive a reset link."
+          "title": "Check your email",
+          "message": "If an account exists for {email}, we've sent a password reset link. It expires in 30 minutes.",
+          "no_email_prompt": "Didn't receive it? Check the address you entered, or",
+          "create_account": "Create an account",
+          "toast_title": "Check your email",
+          "toast_desc": "If an account exists for this email, a reset link is on its way."
         },
         "errors": {
           "request_failed": "Request failed",
