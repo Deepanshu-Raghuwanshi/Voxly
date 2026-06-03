@@ -58,8 +58,18 @@ export const ForgotPasswordForm = () => {
             {isSuccess ? (
               <div className="text-center space-y-6 py-4">
                 <div className="bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 p-4 rounded-xl text-green-800 dark:text-green-300 text-sm">
-                  {t('success.message')}
+                  {t('success.message', { email })}
                 </div>
+                <p className="text-sm text-foreground/60">
+                  {t('success.no_email_prompt')}{' '}
+                  <button
+                    type="button"
+                    onClick={() => router.push('/signup')}
+                    className="text-primary font-semibold hover:underline"
+                  >
+                    {t('success.create_account')}
+                  </button>
+                </p>
                 <button
                   onClick={() => router.push('/login')}
                   className="text-primary font-semibold hover:underline flex items-center justify-center gap-2 mx-auto"

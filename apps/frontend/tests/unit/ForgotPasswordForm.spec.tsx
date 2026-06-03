@@ -18,7 +18,12 @@ vi.mock('next-intl', () => ({
       if (key === 'send_link') return 'Send Reset Link';
       if (key === 'sending_link') return 'Sending Link...';
       if (key === 'back_to_login') return 'Back to Login';
-      if (key === 'success.message') return 'Check your inbox for a password reset link. It will expire in 30 minutes.';
+      if (key === 'success.title') return 'Check your email';
+      if (key === 'success.message')
+        return "If an account exists for that email, we've sent a password reset link. It expires in 30 minutes.";
+      if (key === 'success.no_email_prompt')
+        return "Didn't receive it? Check the address you entered, or";
+      if (key === 'success.create_account') return 'Create an account';
       if (key === 'errors.missing_field_title') return 'Missing field';
       if (key === 'errors.missing_email') return 'Please enter your email address';
       if (key === 'errors.request_failed') return 'Request failed';
@@ -118,8 +123,25 @@ describe('ForgotPasswordForm', () => {
 
     render(<ForgotPasswordForm />);
 
-    expect(screen.getByText(/Check your inbox for a password reset link/i)).toBeTruthy();
+    expect(screen.getByText(/If an account exists for/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Create an account/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /Back to Login/i })).toBeTruthy();
+  });
+
+  it('navigates to signup page when create account link is clicked', async () => {
+    vi.mocked(useForgotPassword).mockReturnValue({
+      mutate: mockForgotPassword,
+      isPending: false,
+      isSuccess: true,
+      error: null,
+    } as unknown as ReturnType<typeof useForgotPassword>);
+
+    render(<ForgotPasswordForm />);
+    const createAccountButton = screen.getByRole('button', { name: /Create an account/i });
+
+    await simulate.click(createAccountButton);
+
+    expect(mockPush).toHaveBeenCalledWith('/signup');
   });
 
   it('navigates to login page when back button is clicked', async () => {
