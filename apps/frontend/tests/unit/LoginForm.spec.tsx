@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { LoginForm } from "../../src/features/auth/components/LoginForm";
@@ -12,32 +12,32 @@ import {
 import { showToast } from "../../src/shared/utils/toast";
 
 // Mock next-intl
-vi.mock('next-intl', () => ({
+vi.mock("next-intl", () => ({
   useTranslations: (namespace?: string) => (key: string) => {
     // Simple mock that returns the key or a portion of it
-    if (key === 'title') return 'Welcome Back';
-    if (key === 'subtitle') return 'Sign in to your account';
-    if (key === 'email_label') return 'Email Address';
-    if (key === 'password_label') return 'Password';
-    if (key === 'forgot_password') return 'Forgot?';
-    if (key === 'sign_in') return 'Sign In';
-    if (key === 'signing_in') return 'Signing in...';
-    if (key === 'or_continue_with') return 'Or continue with';
-    if (key === 'google_login') return 'Google';
-    if (key === 'no_account') return "Don't have an account?";
-    if (key === 'sign_up') return 'Sign Up';
-    if (key === 'email_placeholder') return 'you@example.com';
-    if (key === 'password_placeholder') return 'Enter your password';
-    if (key === 'buttons.sending') return 'Sending...';
-    if (key === 'errors.missing_fields') return 'Missing fields';
-    if (key === 'errors.error') return 'Error';
-    if (key === 'toasts.login_failed') return 'Login failed';
-    if (key === 'toasts.email_sent') return 'Email sent';
-    if (key === 'toasts.google_redirect') return 'Redirecting to Google...';
+    if (key === "title") return "Welcome Back";
+    if (key === "subtitle") return "Sign in to your account";
+    if (key === "email_label") return "Email Address";
+    if (key === "password_label") return "Password";
+    if (key === "forgot_password") return "Forgot?";
+    if (key === "sign_in") return "Sign In";
+    if (key === "signing_in") return "Signing in...";
+    if (key === "or_continue_with") return "Or continue with";
+    if (key === "google_login") return "Google";
+    if (key === "no_account") return "Don't have an account?";
+    if (key === "sign_up") return "Sign Up";
+    if (key === "email_placeholder") return "you@example.com";
+    if (key === "password_placeholder") return "Enter your password";
+    if (key === "buttons.sending") return "Sending...";
+    if (key === "errors.missing_fields") return "Missing fields";
+    if (key === "errors.error") return "Error";
+    if (key === "toasts.login_failed") return "Login failed";
+    if (key === "toasts.email_sent") return "Email sent";
+    if (key === "toasts.google_redirect") return "Redirecting to Google...";
 
     // If namespace is provided, return full key
     return namespace ? `${namespace}.${key}` : key;
-  }
+  },
 }));
 
 // Mock the hooks and utilities
