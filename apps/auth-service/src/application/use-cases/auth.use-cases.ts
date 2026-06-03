@@ -1,15 +1,37 @@
-import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import { User } from '@prisma/client-auth';
-import { RegisterDto, AuthResponse } from '@shared-types';
-import { PrismaService } from '../../infrastructure/persistence/prisma.service';
-import { EmailService } from '../../infrastructure/messaging/email.service';
-import { UserEventsProducer } from '../../infrastructure/messaging/user-events.producer';
+import {
+  Injectable,
+  ConflictException,
+  UnauthorizedException,
+  BadRequestException,
+} from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
+import { randomBytes } from "crypto";
+import * as bcrypt from "bcrypt";
+import { User } from "@prisma/client-auth";
+import { RegisterDto } from "@shared-types";
+import { PrismaService } from "../../infrastructure/persistence/prisma.service";
+import { EmailService } from "../../infrastructure/messaging/email.service";
+import { UserEventsProducer } from "../../infrastructure/messaging/user-events.producer";
+import { validatePasswordPolicy } from "../utils/password-policy";
 
 export interface GoogleProfile {
   email: string;
   googleId: string;
+}
+
+// Internal result of a successful login. The tokens are set as HttpOnly
+// cookies by the controller and never sent in the HTTP body, so this is an
+// internal transport shape rather than a public API response schema.
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: {
+    id: string;
+    email: string;
+    username?: string;
+    fullName?: string;
+    avatarUrl?: string;
+  };
 }
 
 @Injectable()
@@ -27,20 +49,23 @@ export class AuthUseCases {
     });
 
     if (existingUser) {
-      if (existingUser.provider === 'GOOGLE') {
+      if (existingUser.provider === "GOOGLE") {
         // Link account by adding password and updating provider
+        validatePasswordPolicy(dto.password);
         const hashedPassword = await bcrypt.hash(dto.password, 12);
         const user = await this.prisma.user.update({
           where: { id: existingUser.id },
           data: {
             password: hashedPassword,
-            provider: 'BOTH',
+            provider: "BOTH",
           },
         });
         return { id: user.id, email: user.email };
       }
-      throw new ConflictException('User already exists');
+      throw new ConflictException("User already exists");
     }
+
+    validatePasswordPolicy(dto.password);
 
     const hashedPassword = await bcrypt.hash(dto.password, 12);
 
@@ -48,16 +73,21 @@ export class AuthUseCases {
       data: {
         email: dto.email,
         password: hashedPassword,
-        provider: 'LOCAL',
+        provider: "LOCAL",
         isVerified: false,
       },
     });
 
-    const verificationToken = await this.generateEmailVerificationToken(user.id);
+    const verificationToken = await this.generateEmailVerificationToken(
+      user.id,
+    );
     try {
-      await this.emailService.sendVerificationEmail(user.email, verificationToken);
+      await this.emailService.sendVerificationEmail(
+        user.email,
+        verificationToken,
+      );
     } catch (error) {
-      console.error(`Failed to send verification email to ${user.email}:`, error);
+      console.error("Failed to send verification email:", error);
     }
 
     await this.userEventsProducer.emitUserCreated({
@@ -70,12 +100,18 @@ export class AuthUseCases {
   async resendVerificationEmail(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     // Don't leak whether the account exists or is already verified
-    if (!user || user.isVerified || user.provider === 'GOOGLE') {
-      return { message: 'If an unverified account exists for this email, a new verification link has been sent.' };
+    if (!user || user.isVerified || user.provider === "GOOGLE") {
+      return {
+        message:
+          "If an unverified account exists for this email, a new verification link has been sent.",
+      };
     }
     const token = await this.generateEmailVerificationToken(user.id);
     await this.emailService.sendVerificationEmail(user.email, token);
-    return { message: 'If an unverified account exists for this email, a new verification link has been sent.' };
+    return {
+      message:
+        "If an unverified account exists for this email, a new verification link has been sent.",
+    };
   }
 
   async verifyEmail(token: string) {
@@ -84,7 +120,7 @@ export class AuthUseCases {
     });
 
     if (!verification || verification.expiresAt < new Date()) {
-      throw new BadRequestException('Invalid or expired verification token');
+      throw new BadRequestException("Invalid or expired verification token");
     }
 
     await this.prisma.user.update({
@@ -96,11 +132,11 @@ export class AuthUseCases {
       where: { id: verification.id },
     });
 
-    return { message: 'Email verified successfully' };
+    return { message: "Email verified successfully" };
   }
 
   async generateEmailVerificationToken(userId: string): Promise<string> {
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const token = randomBytes(32).toString("hex");
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 1); // 24 hours
 
@@ -113,12 +149,17 @@ export class AuthUseCases {
     return token;
   }
 
-  async validateUser(email: string, pass: string): Promise<Partial<User> | null> {
+  async validateUser(
+    email: string,
+    pass: string,
+  ): Promise<Partial<User> | null> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) return null;
 
-    if (user.provider === 'GOOGLE' && !user.password) {
-      throw new UnauthorizedException('Please set your password first by clicking "Forgot?" or via the email we sent you');
+    if (user.provider === "GOOGLE" && !user.password) {
+      throw new UnauthorizedException(
+        'Please set your password first by clicking "Forgot?" or via the email we sent you',
+      );
     }
 
     if (user.password && (await bcrypt.compare(pass, user.password))) {
@@ -131,16 +172,16 @@ export class AuthUseCases {
 
   async login(user: Partial<User>): Promise<AuthResponse> {
     if (!user.id || !user.email) {
-      throw new UnauthorizedException('Invalid user data');
+      throw new UnauthorizedException("Invalid user data");
     }
-    if (!user.isVerified && user.provider === 'LOCAL') {
-      throw new UnauthorizedException('Please verify your email first');
+    if (!user.isVerified && user.provider === "LOCAL") {
+      throw new UnauthorizedException("Please verify your email first");
     }
 
     const payload = { email: user.email, sub: user.id };
     const accessToken = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_ACCESS_SECRET || 'access-secret',
-      expiresIn: '15m',
+      secret: process.env.JWT_ACCESS_SECRET || "access-secret",
+      expiresIn: "15m",
     });
 
     const refreshToken = await this.generateRefreshToken(user.id);
@@ -156,7 +197,7 @@ export class AuthUseCases {
   }
 
   async generateRefreshToken(userId: string): Promise<string> {
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const token = randomBytes(32).toString("hex");
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
 
@@ -181,7 +222,7 @@ export class AuthUseCases {
         data: {
           email: profile.email,
           googleId: profile.googleId,
-          provider: 'GOOGLE',
+          provider: "GOOGLE",
           isVerified: true,
         },
       });
@@ -193,11 +234,15 @@ export class AuthUseCases {
     } else {
       // Existing user signing in via Google — Google has verified the email,
       // so mark isVerified true and link Google identity if not already linked.
-      const updates: { isVerified: boolean; googleId?: string; provider?: 'GOOGLE' | 'BOTH' } = {
+      const updates: {
+        isVerified: boolean;
+        googleId?: string;
+        provider?: "GOOGLE" | "BOTH";
+      } = {
         isVerified: true,
       };
       if (!user.googleId) updates.googleId = profile.googleId;
-      if (user.provider === 'LOCAL') updates.provider = 'BOTH';
+      if (user.provider === "LOCAL") updates.provider = "BOTH";
 
       user = await this.prisma.user.update({
         where: { id: user.id },
@@ -210,7 +255,7 @@ export class AuthUseCases {
       try {
         await this.emailService.sendPasswordSetupEmail(user.email, token);
       } catch (error) {
-        console.error('Failed to send password setup email:', error);
+        console.error("Failed to send password setup email:", error);
       }
     }
 
@@ -218,7 +263,7 @@ export class AuthUseCases {
   }
 
   async generatePasswordResetToken(userId: string): Promise<string> {
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const token = randomBytes(32).toString("hex");
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 30); // 30 minutes
 
@@ -237,8 +282,10 @@ export class AuthUseCases {
     });
 
     if (!reset || reset.expiresAt < new Date()) {
-      throw new BadRequestException('Invalid or expired password setup token');
+      throw new BadRequestException("Invalid or expired password setup token");
     }
+
+    validatePasswordPolicy(password);
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -247,7 +294,7 @@ export class AuthUseCases {
         where: { id: reset.userId },
         data: {
           password: hashedPassword,
-          provider: 'BOTH',
+          provider: "BOTH",
         },
       }),
       this.prisma.passwordReset.delete({
@@ -255,7 +302,7 @@ export class AuthUseCases {
       }),
     ]);
 
-    return { message: 'Password set successfully' };
+    return { message: "Password set successfully" };
   }
 
   async forgotPassword(email: string) {
@@ -265,13 +312,19 @@ export class AuthUseCases {
 
     if (!user) {
       // Don't leak user existence info, just return success
-      return { message: 'If an account exists for this email, you will receive a password reset link shortly' };
+      return {
+        message:
+          "If an account exists for this email, you will receive a password reset link shortly",
+      };
     }
 
     const token = await this.generatePasswordResetToken(user.id);
     await this.emailService.sendPasswordResetEmail(user.email, token);
 
-    return { message: 'If an account exists for this email, you will receive a password reset link shortly' };
+    return {
+      message:
+        "If an account exists for this email, you will receive a password reset link shortly",
+    };
   }
 
   async resetPassword(token: string, password: string) {
@@ -280,8 +333,10 @@ export class AuthUseCases {
     });
 
     if (!reset || reset.expiresAt < new Date()) {
-      throw new BadRequestException('Invalid or expired password reset token');
+      throw new BadRequestException("Invalid or expired password reset token");
     }
+
+    validatePasswordPolicy(password);
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -297,7 +352,7 @@ export class AuthUseCases {
       }),
     ]);
 
-    return { message: 'Password reset successfully' };
+    return { message: "Password reset successfully" };
   }
 
   async refreshTokens(token: string) {
@@ -307,12 +362,12 @@ export class AuthUseCases {
     });
 
     if (!refreshToken || refreshToken.expiresAt < new Date()) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException("Invalid or expired refresh token");
     }
 
     // Rotate refresh token
     await this.prisma.refreshToken.delete({ where: { id: refreshToken.id } });
-    
+
     return this.login(refreshToken.user);
   }
 
@@ -322,10 +377,10 @@ export class AuthUseCases {
     });
 
     if (existingUser) {
-      throw new ConflictException('Email already in use');
+      throw new ConflictException("Email already in use");
     }
 
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const token = randomBytes(32).toString("hex");
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1); // 1 hour
 
@@ -337,7 +392,7 @@ export class AuthUseCases {
 
     await this.emailService.sendEmailChangeVerification(newEmail, token);
 
-    return { message: 'Verification email sent to new address' };
+    return { message: "Verification email sent to new address" };
   }
 
   async verifyEmailChange(token: string, newEmail: string) {
@@ -345,8 +400,12 @@ export class AuthUseCases {
       where: { token },
     });
 
-    if (!changeRequest || changeRequest.expiresAt < new Date() || changeRequest.newEmail !== newEmail) {
-      throw new BadRequestException('Invalid or expired verification token');
+    if (
+      !changeRequest ||
+      changeRequest.expiresAt < new Date() ||
+      changeRequest.newEmail !== newEmail
+    ) {
+      throw new BadRequestException("Invalid or expired verification token");
     }
 
     const user = await this.prisma.user.update({
@@ -364,7 +423,7 @@ export class AuthUseCases {
       email: user.email,
     });
 
-    return { message: 'Email updated successfully' };
+    return { message: "Email updated successfully" };
   }
 
   async logout(token: string) {

@@ -2,36 +2,95 @@ openapi: 3.0.0
 info:
   title: Auth Service API
   version: 1.0.0
+
+security:
+  - cookieAuth: []
+
 paths:
-  /api/v1/auth/login:
+  /api/v1/auth/register:
     post:
-      summary: Login user
+      summary: Register a new user with email and password
+      tags: [Auth]
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginDto'
+              $ref: "#/components/schemas/RegisterDto"
       responses:
-        '200':
-          description: Successful login
+        "201":
+          description: User registered; verification email sent
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthResponse'
-  /api/v1/auth/register:
+                $ref: "#/components/schemas/RegisterResponse"
+        "400":
+          description: Validation error (weak password, invalid email)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/auth/login:
     post:
-      summary: Register user
+      summary: Login with email and password
+      tags: [Auth]
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterDto'
+              $ref: "#/components/schemas/LoginDto"
       responses:
-        '201':
-          description: User registered
+        "200":
+          description: Successful login; sets HttpOnly cookies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserResponse"
+        "401":
+          description: Invalid credentials or unverified email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/auth/logout:
+    post:
+      summary: Logout user and clear auth cookies
+      tags: [Auth]
+      responses:
+        "200":
+          description: Logged out successfully
+
+  /api/v1/auth/refresh:
+    post:
+      summary: Rotate refresh token and issue new access token
+      tags: [Auth]
+      responses:
+        "200":
+          description: New tokens set in HttpOnly cookies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserResponse"
+        "401":
+          description: Missing or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/v1/auth/verify-email:
     get:
-      summary: Verify email via token
+      summary: Verify email address via token from email link
+      tags: [Auth]
       parameters:
         - name: token
           in: query
@@ -39,79 +98,122 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: Email verified
-  /api/v1/auth/change-email:
+        "200":
+          description: Email verified successfully
+        "400":
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/auth/resend-verification:
     post:
-      summary: Request email change
+      summary: Resend email verification link
+      tags: [Auth]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                newEmail:
-                  type: string
-                  format: email
+              $ref: "#/components/schemas/EmailOnlyDto"
       responses:
-        '200':
-          description: Verification code sent to new email
-  /api/v1/auth/verify-email-change:
+        "200":
+          description: Verification email sent if account exists and is unverified
+
+  /api/v1/auth/forgot-password:
     post:
-      summary: Verify and complete email change
+      summary: Request a password reset link via email
+      tags: [Auth]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                token:
-                  type: string
-                newEmail:
-                  type: string
-                  format: email
+              $ref: "#/components/schemas/EmailOnlyDto"
       responses:
-        '200':
-          description: Email updated successfully
-  /api/v1/auth/refresh:
+        "200":
+          description: Reset link sent if account exists
+
+  /api/v1/auth/reset-password:
     post:
-      summary: Refresh access token
+      summary: Reset password using token from email link
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordDto"
       responses:
-        '200':
-          description: Token refreshed
-  /api/v1/auth/logout:
+        "200":
+          description: Password reset successfully
+        "400":
+          description: Invalid/expired token or password fails policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/auth/set-password:
     post:
-      summary: Logout user
+      summary: Set password for first time (Google users)
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetPasswordDto"
       responses:
-        '200':
-          description: Logged out
+        "200":
+          description: Password set successfully
+        "400":
+          description: Invalid/expired token or password fails policy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /api/v1/auth/google:
     get:
-      summary: Google OAuth login
+      summary: Initiate Google OAuth login
+      tags: [Auth]
       responses:
-        '302':
+        "302":
           description: Redirect to Google
+
   /api/v1/auth/google/callback:
     get:
       summary: Google OAuth callback
+      tags: [Auth]
       responses:
-        '302':
-          description: Redirect to frontend
+        "302":
+          description: Redirect to frontend after auth
 
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+
   schemas:
-    LoginDto:
-      type: object
-      required:
-        - email
-        - password
-      properties:
-        email:
-          type: string
-        password:
-          type: string
+    # ------------------------------------------------------------------
+    # Password field is annotated with the enforced policy:
+    #   min 8 chars, max 128, at least one uppercase, one lowercase,
+    #   one digit, one special character from [@$!%*?&-_#^()]
+    # ------------------------------------------------------------------
+    PasswordField:
+      type: string
+      format: password
+      minLength: 8
+      maxLength: 128
+      pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\-_#^()]).{8,128}$'
+      description: >
+        Must be 8–128 characters and contain at least one uppercase letter,
+        one lowercase letter, one digit, and one special character (@$!%*?&-_#^()).
+
     RegisterDto:
       type: object
       required:
@@ -120,32 +222,101 @@ components:
       properties:
         email:
           type: string
+          format: email
         password:
-          type: string
-    AuthResponse:
+          $ref: "#/components/schemas/PasswordField"
+
+    LoginDto:
       type: object
       required:
-        - accessToken
-        - refreshToken
-        - user
+        - email
+        - password
       properties:
-        accessToken:
+        email:
           type: string
-        refreshToken:
+          format: email
+        password:
           type: string
-        user:
-          type: object
-          required:
-            - id
-            - email
-          properties:
-            id:
-              type: string
-            email:
-              type: string
-            username:
-              type: string
-            fullName:
-              type: string
-            avatarUrl:
-              type: string
+          format: password
+          description: Sent as plaintext over TLS; bcrypt-compared server-side
+
+    ResetPasswordDto:
+      type: object
+      required:
+        - token
+        - password
+      properties:
+        token:
+          type: string
+          description: 64-char hex token from password reset email
+        password:
+          $ref: "#/components/schemas/PasswordField"
+
+    SetPasswordDto:
+      type: object
+      required:
+        - token
+        - password
+      properties:
+        token:
+          type: string
+          description: 64-char hex token from password setup email
+        password:
+          $ref: "#/components/schemas/PasswordField"
+
+    EmailOnlyDto:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    RegisterResponse:
+      type: object
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+
+    AuthUserResponse:
+      type: object
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+        method:
+          type: string
+        error:
+          type: string
+        message:
+          type: string
+
+# Kafka Events
+# Produces: user.created.v1 (on successful registration or first Google login)
+# Produces: user.updated.v1 (on successful email change)
+# Consumes: none

@@ -51,7 +51,7 @@
         "email_label": "Email Address",
         "email_placeholder": "you@example.com",
         "password_label": "Password",
-        "password_placeholder": "Minimum 6 characters",
+        "password_placeholder": "Minimum 8 characters",
         "confirm_password_label": "Confirm Password",
         "confirm_password_placeholder": "Confirm your password",
         "create_account": "Create Account",
@@ -72,7 +72,6 @@
         "errors": {
           "password_mismatch": "Passwords do not match",
           "password_mismatch_title": "Password mismatch",
-          "weak_password": "Password must be at least 6 characters",
           "weak_password_title": "Weak password"
         },
         "toasts": {
@@ -121,7 +120,6 @@
           "no_token": "No token provided in the URL",
           "password_mismatch": "Passwords do not match",
           "password_mismatch_title": "Passwords mismatch",
-          "weak_password": "Password must be at least 8 characters long",
           "weak_password_title": "Weak password",
           "failed": "Failed to reset password"
         }
@@ -147,9 +145,30 @@
           "no_token": "No token provided in the URL",
           "password_mismatch": "Passwords do not match",
           "password_mismatch_title": "Passwords mismatch",
-          "weak_password": "Password must be at least 8 characters long",
           "weak_password_title": "Weak password",
           "failed": "Failed to set password"
+        }
+      },
+      "password_policy": {
+        "strength_prefix": "Password strength",
+        "too_short": "Use at least 8 characters",
+        "no_uppercase": "Add an uppercase letter",
+        "no_lowercase": "Add a lowercase letter",
+        "no_number": "Add a number",
+        "no_special": "Add a special character (@$!%*?&-_#^())",
+        "too_long": "Use 128 characters or fewer",
+        "requirements": {
+          "length": "8–128 characters",
+          "uppercase": "One uppercase letter",
+          "lowercase": "One lowercase letter",
+          "number": "One number",
+          "special": "One special character (@$!%*?&-_#^())"
+        },
+        "strength": {
+          "weak": "Weak",
+          "fair": "Fair",
+          "good": "Good",
+          "strong": "Strong"
         }
       },
       "verify_email": {

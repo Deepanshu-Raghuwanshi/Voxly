@@ -9,7 +9,6 @@ import { components as chatComponents } from "./v1/chat.types";
 // Export specific schemas for easier use
 export type LoginDto = authComponents["schemas"]["LoginDto"];
 export type RegisterDto = authComponents["schemas"]["RegisterDto"];
-export type AuthResponse = authComponents["schemas"]["AuthResponse"];
 
 export type UserProfile = userComponents["schemas"]["UserProfile"];
 
