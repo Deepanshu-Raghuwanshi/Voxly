@@ -6,8 +6,9 @@ import {
 import { ConfigService } from "@nestjs/config";
 import Groq from "groq-sdk";
 import { AiSummarizerPort } from "../../application/ports/ai-summarizer.port";
+import { GROQ_TEXT_MODEL } from "./ai-models";
 
-const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+const MODEL = GROQ_TEXT_MODEL;
 const TIMEOUT_MS = 15_000;
 
 const SYSTEM_INSTRUCTION =

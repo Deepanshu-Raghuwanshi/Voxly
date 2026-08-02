@@ -9,7 +9,7 @@ import {
 import { PERSONAS, PersonaId, isValidPersonaId } from "@shared-utils";
 import { PersonaMessageRepository } from "../ports/persona-message.repository";
 import { PersonaRateLimiterService } from "../../infrastructure/ai/persona-rate-limiter.service";
-import { PersonaGroqAgentService } from "../../infrastructure/ai/persona-groq-agent.service";
+import { PersonaAgentPort } from "../ports/persona-agent.port";
 
 export interface RunPersonaAgentInput {
   userId: string;
@@ -125,7 +125,8 @@ export class RunPersonaAgentUseCase {
     @Inject("PersonaMessageRepository")
     private readonly personaMessageRepo: PersonaMessageRepository,
     private readonly personaRateLimiter: PersonaRateLimiterService,
-    private readonly personaGroqAgent: PersonaGroqAgentService,
+    @Inject("PersonaAgent")
+    private readonly personaAgent: PersonaAgentPort,
   ) {}
 
   async execute(
@@ -194,7 +195,7 @@ export class RunPersonaAgentUseCase {
     // 6. Run persona agent
     let agentResult: { reply: string; toolUsed: "web_search" | "direct" };
     try {
-      agentResult = await this.personaGroqAgent.run({
+      agentResult = await this.personaAgent.run({
         query: message,
         context,
         userId,
@@ -210,17 +211,28 @@ export class RunPersonaAgentUseCase {
       );
     }
 
-    // 7. Persist AI reply
+    // 7. Persist AI reply — `content` is required by the schema, so a blank
+    //    reply must surface as a 503 rather than a ValidationError crash
+    const reply = agentResult.reply?.trim();
+    if (!reply) {
+      this.logger.error(
+        `[PERSONA AGENT] empty reply | userId=${userId} personaId=${personaId} tool=${agentResult.toolUsed}`,
+      );
+      throw new ServiceUnavailableException(
+        `${persona.name} is unavailable right now, try again in a moment`,
+      );
+    }
+
     await this.personaMessageRepo.save({
       userId,
       personaId,
       role: "assistant",
-      content: agentResult.reply,
+      content: reply,
       toolUsed: agentResult.toolUsed,
     });
 
     return {
-      reply: agentResult.reply,
+      reply,
       personaId,
       toolUsed: agentResult.toolUsed,
     };

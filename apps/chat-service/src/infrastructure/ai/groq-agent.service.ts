@@ -10,8 +10,9 @@ import {
 import { TavilyWebSearchService } from "./tavily-web-search.service";
 import { OpenWeatherService } from "./openweather.service";
 import { UrlSummarizerService } from "./url-summarizer.service";
+import { GROQ_TOOL_MODEL, REASONING_EFFORT } from "./ai-models";
 
-const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+const MODEL = GROQ_TOOL_MODEL;
 
 // Turn 1: select the right tool (scope filtering lives here)
 const SYSTEM_PROMPT =
@@ -152,6 +153,7 @@ export class GroqAgentService implements AiAgentPort {
         tools: TOOLS,
         tool_choice: "auto",
         max_tokens: 1024,
+        reasoning_effort: REASONING_EFFORT,
       });
 
       const choice = turn1.choices[0];
@@ -235,7 +237,8 @@ export class GroqAgentService implements AiAgentPort {
           content: `${query}\n\n[${toolName} result]: ${toolResult}`,
         },
       ],
-      max_tokens: 512,
+      max_tokens: 1024,
+      reasoning_effort: REASONING_EFFORT,
     });
 
     const elapsed = Date.now() - start;
@@ -333,6 +336,7 @@ export class GroqAgentService implements AiAgentPort {
             { role: "user", content: args["text"] ?? "" },
           ],
           max_tokens: 512,
+          reasoning_effort: REASONING_EFFORT,
         });
         return completion.choices[0]?.message?.content?.trim() ?? "";
       }

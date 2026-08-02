@@ -6,6 +6,7 @@ import {
 import { GroqAgentService } from "./groq-agent.service";
 import { CerebrasAgentService } from "./cerebras-agent.service";
 import { runWithFallbackChain } from "./ai-provider-chain";
+import { GROQ_TOOL_MODEL, CEREBRAS_MODEL } from "./ai-models";
 
 @Injectable()
 export class AgentFallbackService implements AiAgentPort {
@@ -25,13 +26,13 @@ export class AgentFallbackService implements AiAgentPort {
       [
         {
           name: "groq",
-          model: "meta-llama/llama-4-scout-17b-16e-instruct",
+          model: GROQ_TOOL_MODEL,
           feature: "agent",
           fn: () => this.groq.run(query, context, userId),
         },
         {
           name: "cerebras",
-          model: "gpt-oss-120b",
+          model: CEREBRAS_MODEL,
           feature: "agent",
           fn: () => this.cerebras.run(query, context, userId),
         },

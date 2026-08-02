@@ -6,6 +6,7 @@ import {
 import { GroqRewriteService } from "./groq-rewrite.service";
 import { CerebrasRewriteService } from "./cerebras-rewrite.service";
 import { runWithFallbackChain } from "./ai-provider-chain";
+import { GROQ_TEXT_MODEL, CEREBRAS_MODEL } from "./ai-models";
 
 @Injectable()
 export class RewriteFallbackService implements AiRewriterPort {
@@ -21,13 +22,13 @@ export class RewriteFallbackService implements AiRewriterPort {
       [
         {
           name: "groq",
-          model: "meta-llama/llama-4-scout-17b-16e-instruct",
+          model: GROQ_TEXT_MODEL,
           feature: "rewrite",
           fn: () => this.groq.rewrite(text, tone),
         },
         {
           name: "cerebras",
-          model: "gpt-oss-120b",
+          model: CEREBRAS_MODEL,
           feature: "rewrite",
           fn: () => this.cerebras.rewrite(text, tone),
         },

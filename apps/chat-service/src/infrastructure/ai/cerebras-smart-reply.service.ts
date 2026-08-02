@@ -6,15 +6,14 @@ import {
 import { ConfigService } from "@nestjs/config";
 import OpenAI from "openai";
 import { AiSmartReplierPort } from "../../application/ports/ai-smart-reply.port";
+import { CEREBRAS_MODEL, REASONING_EFFORT } from "./ai-models";
 
-const MODEL = "gpt-oss-120b";
+const MODEL = CEREBRAS_MODEL;
 const CEREBRAS_BASE_URL = "https://api.cerebras.ai/v1";
-// gpt-oss-120b is a reasoning model: reasoning tokens are drawn from max_tokens
-// before any content is emitted. At the old budget of 120 the reasoning alone
-// consumed ~117 tokens and the response came back with finish_reason=length and
-// no content at all. Keep the effort low and the budget well above what the
-// 3 suggestions actually need.
-const REASONING_EFFORT = "low" as const;
+// At the old budget of 120 the reasoning alone consumed ~117 tokens and the
+// response came back with finish_reason=length and no content at all — keep the
+// budget well above what the 3 suggestions actually need.
+const MAX_TOKENS = 400;
 
 const SYSTEM_INSTRUCTION =
   "Generate exactly 3 short, natural chat reply suggestions (2–10 words each). " +
@@ -57,7 +56,7 @@ export class CerebrasSmartReplyService implements AiSmartReplierPort {
           { role: "system", content: SYSTEM_INSTRUCTION },
           { role: "user", content: buildPrompt(messages) },
         ],
-        max_tokens: 400,
+        max_tokens: MAX_TOKENS,
         temperature: 0.8,
         reasoning_effort: REASONING_EFFORT,
       });

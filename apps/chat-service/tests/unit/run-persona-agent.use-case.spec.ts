@@ -7,7 +7,7 @@ import {
   PersonaRateLimitedException,
 } from "../../src/application/use-cases/run-persona-agent.use-case";
 import { PersonaRateLimiterService } from "../../src/infrastructure/ai/persona-rate-limiter.service";
-import { PersonaGroqAgentService } from "../../src/infrastructure/ai/persona-groq-agent.service";
+import { PersonaAgentPort } from "../../src/application/ports/persona-agent.port";
 import { PersonaMessageRepository } from "../../src/application/ports/persona-message.repository";
 
 const MOCK_DOC = {
@@ -24,7 +24,7 @@ describe("RunPersonaAgentUseCase", () => {
   let useCase: RunPersonaAgentUseCase;
   let repoStub: sinon.SinonStubbedInstance<PersonaMessageRepository>;
   let rateLimiterStub: sinon.SinonStubbedInstance<PersonaRateLimiterService>;
-  let agentStub: sinon.SinonStubbedInstance<PersonaGroqAgentService>;
+  let agentStub: sinon.SinonStubbedInstance<PersonaAgentPort>;
 
   beforeEach(() => {
     repoStub = {
@@ -39,12 +39,12 @@ describe("RunPersonaAgentUseCase", () => {
       run: sinon
         .stub()
         .resolves({ reply: "Nova says hi", toolUsed: "web_search" }),
-    } as unknown as sinon.SinonStubbedInstance<PersonaGroqAgentService>;
+    } as unknown as sinon.SinonStubbedInstance<PersonaAgentPort>;
 
     useCase = new RunPersonaAgentUseCase(
       repoStub as unknown as PersonaMessageRepository,
       rateLimiterStub as unknown as PersonaRateLimiterService,
-      agentStub as unknown as PersonaGroqAgentService,
+      agentStub as unknown as PersonaAgentPort,
     );
   });
 
@@ -255,6 +255,31 @@ describe("RunPersonaAgentUseCase", () => {
         // expected
       }
       expect((agentStub.run as sinon.SinonStub).callCount).to.equal(0);
+    });
+
+    it("should throw ServiceUnavailableException without persisting when the reply is blank", async () => {
+      (agentStub.run as sinon.SinonStub).resolves({
+        reply: "   ",
+        toolUsed: "direct",
+      });
+
+      let caught: unknown;
+      try {
+        await useCase.execute({
+          userId: "user-1",
+          personaId: "nova",
+          message: "hello",
+        });
+      } catch (e) {
+        caught = e;
+      }
+
+      expect(caught).to.be.instanceOf(ServiceUnavailableException);
+      // Only the user's own message should have been saved, never a blank assistant reply
+      const assistantSaves = (repoStub.save as sinon.SinonStub).args.filter(
+        (a: Array<{ role?: string }>) => a[0]?.role === "assistant",
+      );
+      expect(assistantSaves.length).to.equal(0);
     });
   });
 });

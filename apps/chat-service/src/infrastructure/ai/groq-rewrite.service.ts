@@ -9,8 +9,9 @@ import {
   AiRewriterPort,
   RewriteTone,
 } from "../../application/ports/ai-rewriter.port";
+import { GROQ_TEXT_MODEL } from "./ai-models";
 
-const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+const MODEL = GROQ_TEXT_MODEL;
 
 const SYSTEM_INSTRUCTION =
   "You are a message rewriting assistant embedded in a chat application. " +
