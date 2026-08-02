@@ -59,6 +59,9 @@ export class CerebrasRewriteService implements AiRewriterPort {
         ],
         max_tokens: 1024,
         temperature: 0.7,
+        // gpt-oss-120b draws reasoning tokens from max_tokens before emitting
+        // content — keep the effort low so the budget goes to the rewrite itself
+        reasoning_effort: "low",
       });
 
       const content = result.choices[0]?.message?.content?.trim() ?? "";

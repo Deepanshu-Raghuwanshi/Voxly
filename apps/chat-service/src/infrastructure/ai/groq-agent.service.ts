@@ -190,8 +190,10 @@ export class GroqAgentService implements AiAgentPort {
     }
 
     if (!toolName || !toolArgs) {
+      // Nothing salvageable — throw so the provider chain can try the next model
+      if (!directReply) throw new Error("model returned an empty reply");
       return {
-        reply: directReply ?? "",
+        reply: directReply,
         toolUsed: "direct",
       };
     }
@@ -217,6 +219,7 @@ export class GroqAgentService implements AiAgentPort {
       this.logger.log(
         `[AGENT] userId=${userId} tool=translate elapsed=${elapsed}ms`,
       );
+      if (!toolResult.trim()) throw new Error("translation returned no text");
       return { reply: toolResult, toolUsed: "translate" };
     }
 
@@ -240,8 +243,19 @@ export class GroqAgentService implements AiAgentPort {
       `[AGENT] userId=${userId} tool=${toolName} elapsed=${elapsed}ms`,
     );
 
+    const synthesized = turn2.choices[0]?.message?.content?.trim();
+    if (!synthesized) {
+      this.logger.warn(
+        `[AGENT] userId=${userId} tool=${toolName} synthesis returned empty content ` +
+          `(finish_reason=${turn2.choices[0]?.finish_reason}) — falling back to raw tool result`,
+      );
+      const raw = toolResult.trim();
+      if (!raw) throw new Error("model returned an empty reply");
+      return { reply: raw.slice(0, 2000), toolUsed: toolName };
+    }
+
     return {
-      reply: turn2.choices[0].message.content?.trim() ?? "",
+      reply: synthesized,
       toolUsed: toolName,
     };
   }

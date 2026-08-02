@@ -60,8 +60,11 @@ export class CerebrasSummaryService implements AiSummarizerPort {
           { role: "system", content: SYSTEM_INSTRUCTION },
           { role: "user", content: buildPrompt(messages) },
         ],
-        max_tokens: 512,
+        max_tokens: 800,
         temperature: 0.3,
+        // gpt-oss-120b draws reasoning tokens from max_tokens before emitting
+        // content — keep the effort low so the budget goes to the summary itself
+        reasoning_effort: "low",
       });
 
       const raw = result.choices[0]?.message?.content?.trim() ?? "";

@@ -1,16 +1,18 @@
 import React from 'react';
 import { screen } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { Navbar } from '../../src/shared/components/Navbar';
 import { renderWithIntl } from '../utils/render';
 import { useAuthStore } from '../../src/features/auth/store/useAuthStore';
 import { useLogout } from '../../src/features/auth/hooks/useAuth';
 import { usePathname } from 'next/navigation';
+import { useTotalUnreadCount } from '../../src/features/chat/hooks/useChat';
 
 // Mock the dependencies
 vi.mock('../../src/features/auth/store/useAuthStore');
 vi.mock('../../src/features/auth/hooks/useAuth');
 vi.mock('next/navigation');
+vi.mock('../../src/features/chat/hooks/useChat');
 
 describe('Navbar Component', () => {
   const mockUser = {
@@ -18,6 +20,10 @@ describe('Navbar Component', () => {
     username: 'testuser',
     fullName: 'Test User'
   };
+
+  beforeEach(() => {
+    vi.mocked(useTotalUnreadCount).mockReturnValue(0);
+  });
 
   it('should not render when not authenticated', () => {
     vi.mocked(useAuthStore).mockReturnValue({ isAuthenticated: false, user: null } as unknown as ReturnType<typeof useAuthStore>);
@@ -71,5 +77,38 @@ describe('Navbar Component', () => {
     // Check for spinner
     const logoutBtn = screen.getByTitle(/logout/i);
     expect(logoutBtn.querySelector('svg.animate-spin')).toBeTruthy();
+  });
+
+  describe('unread badge', () => {
+    beforeEach(() => {
+      vi.mocked(useAuthStore).mockReturnValue({ isAuthenticated: true, user: mockUser } as unknown as ReturnType<typeof useAuthStore>);
+      vi.mocked(useLogout).mockReturnValue({ mutate: vi.fn(), isPending: false } as unknown as ReturnType<typeof useLogout>);
+      vi.mocked(usePathname).mockReturnValue('/friends');
+    });
+
+    it('should not render a badge when there are no unread messages', () => {
+      vi.mocked(useTotalUnreadCount).mockReturnValue(0);
+
+      renderWithIntl(<Navbar />);
+
+      expect(screen.queryByLabelText(/unread message/i)).toBeNull();
+    });
+
+    it('should render the unread count on the chat icon', () => {
+      vi.mocked(useTotalUnreadCount).mockReturnValue(4);
+
+      renderWithIntl(<Navbar />);
+
+      const badge = screen.getByLabelText(/4 unread messages/i);
+      expect(badge.textContent).toBe('4');
+    });
+
+    it('should cap the displayed count at 99+', () => {
+      vi.mocked(useTotalUnreadCount).mockReturnValue(150);
+
+      renderWithIntl(<Navbar />);
+
+      expect(screen.getByLabelText(/150 unread messages/i).textContent).toBe('99+');
+    });
   });
 });

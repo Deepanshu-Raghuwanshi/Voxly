@@ -23,7 +23,7 @@ import { useAuthStore } from "../../auth/store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import { useTranslations } from "next-intl";
 
-export const useConversations = () => {
+export const useConversations = (enabled: boolean = true) => {
   return useInfiniteQuery({
     queryKey: ["conversations"],
     queryFn: ({ pageParam }) =>
@@ -33,7 +33,30 @@ export const useConversations = () => {
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.nextCursor : undefined,
     initialPageParam: undefined as string | undefined,
+    enabled,
   });
+};
+
+/**
+ * Total unread messages across every loaded conversation — drives the navbar badge.
+ * Shares the ["conversations"] cache with the sidebar, so the socket-driven
+ * invalidation on "message.new" keeps the count live with no extra wiring.
+ */
+export const useTotalUnreadCount = (): number => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { data } = useConversations(Boolean(isAuthenticated));
+
+  return (
+    data?.pages.reduce(
+      (total, page) =>
+        total +
+        (page.data ?? []).reduce(
+          (sum, conv) => sum + (conv.unreadCount ?? 0),
+          0,
+        ),
+      0,
+    ) ?? 0
+  );
 };
 
 export const useConversation = (conversationId: string) => {
