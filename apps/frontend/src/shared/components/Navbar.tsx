@@ -12,6 +12,8 @@ import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { cn } from "../utils/cn";
 import { useProfile } from "../../features/profile/hooks/useProfile";
+import { useTotalUnreadCount } from "../../features/chat/hooks/useChat";
+import { usePresence } from "../../features/friends/hooks/usePresence";
 
 export const Navbar = () => {
   const { isAuthenticated, user } = useAuthStore();
@@ -20,6 +22,11 @@ export const Navbar = () => {
   const pathname = usePathname();
 
   const { updateTheme } = useProfile();
+  // Both must run before the early return below — hooks cannot be conditional.
+  // The navbar is mounted on every authenticated page, so opening the presence
+  // socket here keeps the unread badge live outside the chat and friends pages.
+  usePresence(Boolean(isAuthenticated));
+  const unreadCount = useTotalUnreadCount();
 
   if (!isAuthenticated) return null;
 
@@ -38,8 +45,16 @@ export const Navbar = () => {
             className="flex items-center gap-2 group"
             title={t("app_name")}
           >
-            <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+            <div className="relative w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center group-hover:bg-primary/20 transition-colors">
               <MessageSquare className="w-5 h-5 text-primary" />
+              {unreadCount > 0 && (
+                <span
+                  aria-label={t("unread_messages", { count: unreadCount })}
+                  className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-primary text-white text-[10px] font-bold leading-none rounded-full ring-2 ring-card"
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </div>
           </Link>
 

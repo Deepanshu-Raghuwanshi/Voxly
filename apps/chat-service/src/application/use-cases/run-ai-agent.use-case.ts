@@ -266,12 +266,28 @@ export class RunAiAgentUseCase {
     }
 
     // 10–12. Persist AI response, stop typing, broadcast — finally guarantees typing.stopped even on DB failure
+    // `content` is required by the schema, so never persist a blank reply.
+    const reply = agentResult.reply?.trim();
+    if (!reply) {
+      this.presenceGateway.emitToRoom(
+        `conversation:${conversationId}`,
+        "typing.stopped",
+        { conversationId, userId: "AI" },
+      );
+      this.logger.error(
+        `[AGENT] empty reply | userId=${userId} | tool=${agentResult.toolUsed} | query="${cleanQuery}"`,
+      );
+      throw new ServiceUnavailableException(
+        "AI couldn't produce a response, try again shortly",
+      );
+    }
+
     let messageView: MessageView;
     try {
       const savedMessage = await this.messageRepository.create({
         conversationId,
         senderId: userId,
-        content: agentResult.reply,
+        content: reply,
         type: "TEXT",
         isAI: true,
         toolUsed: agentResult.toolUsed,

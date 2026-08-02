@@ -484,4 +484,39 @@ describe("RunAiAgentUseCase (Unit)", () => {
       }
     });
   });
+
+  describe("empty reply handling", () => {
+    it("should throw ServiceUnavailableException instead of persisting a blank message", async () => {
+      rateLimiter.check.returns({ allowed: true });
+      conversationRepo.findById.resolves(makeConversation());
+      participantRepo.findByConversationAndUser.resolves(
+        makeParticipant("user-1"),
+      );
+      messageRepo.findByConversationId.resolves([]);
+      messageRepo.create.resolves(makeSavedAiMessage());
+      aiAgent.run.resolves({ reply: "   ", toolUsed: "web_search" });
+
+      try {
+        await useCase.execute({
+          userId: "user-1",
+          conversationId: "conv-1",
+          message: "@AI gold rate today",
+        });
+        expect.fail("Should have thrown ServiceUnavailableException");
+      } catch (err) {
+        expect(err).to.be.instanceOf(ServiceUnavailableException);
+      }
+
+      // The AI message must not be persisted — only the user's query message
+      const aiCreates = messageRepo.create.args.filter(
+        (a: Array<{ isAI?: boolean }>) => a[0]?.isAI === true,
+      );
+      expect(aiCreates.length).to.equal(0);
+
+      const stoppedCalls = presenceGateway.emitToRoom.args.filter(
+        (a: unknown[]) => a[1] === "typing.stopped",
+      );
+      expect(stoppedCalls.length).to.be.greaterThan(0);
+    });
+  });
 });

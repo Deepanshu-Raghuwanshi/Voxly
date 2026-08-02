@@ -9,6 +9,12 @@ import { AiSmartReplierPort } from "../../application/ports/ai-smart-reply.port"
 
 const MODEL = "gpt-oss-120b";
 const CEREBRAS_BASE_URL = "https://api.cerebras.ai/v1";
+// gpt-oss-120b is a reasoning model: reasoning tokens are drawn from max_tokens
+// before any content is emitted. At the old budget of 120 the reasoning alone
+// consumed ~117 tokens and the response came back with finish_reason=length and
+// no content at all. Keep the effort low and the budget well above what the
+// 3 suggestions actually need.
+const REASONING_EFFORT = "low" as const;
 
 const SYSTEM_INSTRUCTION =
   "Generate exactly 3 short, natural chat reply suggestions (2–10 words each). " +
@@ -51,8 +57,9 @@ export class CerebrasSmartReplyService implements AiSmartReplierPort {
           { role: "system", content: SYSTEM_INSTRUCTION },
           { role: "user", content: buildPrompt(messages) },
         ],
-        max_tokens: 120,
+        max_tokens: 400,
         temperature: 0.8,
+        reasoning_effort: REASONING_EFFORT,
       });
 
       const rawText = result.choices[0]?.message?.content?.trim() ?? "";
@@ -64,7 +71,9 @@ export class CerebrasSmartReplyService implements AiSmartReplierPort {
 
       if (suggestions.length < 3) {
         this.logger.warn(
-          `Cerebras returned only ${suggestions.length} usable suggestion(s) — need 3`,
+          `Cerebras returned only ${suggestions.length} usable suggestion(s) — need 3 ` +
+            `(finish_reason=${result.choices[0]?.finish_reason}, ` +
+            `reasoning_tokens=${result.usage?.completion_tokens_details?.reasoning_tokens})`,
         );
         throw new ServiceUnavailableException(
           "AI provider returned insufficient suggestions",

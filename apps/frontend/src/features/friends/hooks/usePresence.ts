@@ -102,10 +102,17 @@ export const emitTypingStop = (conversationId: string) => {
   socket?.emit("typing.stop", { conversationId });
 };
 
-export const usePresence = () => {
+/**
+ * Opens the shared presence socket and registers every realtime handler.
+ * Safe to call from several components — the module-level `socket` guard means
+ * only the first caller connects and the handlers are registered once.
+ * Pass `enabled: false` to hold off while the user is unauthenticated.
+ */
+export const usePresence = (enabled: boolean = true) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (!enabled) return;
     if (!socket) {
       const CHAT_SERVICE_URL =
         process.env.NEXT_PUBLIC_CHAT_SERVICE_URL || "http://localhost:3003";
@@ -403,5 +410,5 @@ export const usePresence = () => {
     return () => {
       // Socket stays alive across components — no disconnect on unmount
     };
-  }, [queryClient]);
+  }, [queryClient, enabled]);
 };

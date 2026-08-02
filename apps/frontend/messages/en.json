@@ -349,6 +349,7 @@
       "friends": "Friends",
       "explore": "AI Experts",
       "profile": "Profile",
+      "unread_messages": "{count, plural, one {# unread message} other {# unread messages}}",
       "buttons": {
         "logout": "Logout"
       },

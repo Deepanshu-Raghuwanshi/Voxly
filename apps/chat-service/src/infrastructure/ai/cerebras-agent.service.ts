@@ -16,6 +16,10 @@ import { UrlSummarizerService } from "./url-summarizer.service";
 
 const MODEL = "gpt-oss-120b";
 const CEREBRAS_BASE_URL = "https://api.cerebras.ai/v1";
+// gpt-oss-120b is a reasoning model and its reasoning tokens are drawn from
+// max_tokens before any content is emitted — an unconstrained effort can burn
+// the whole budget and return finish_reason=length with empty content.
+const REASONING_EFFORT = "low" as const;
 
 const SYSTEM_PROMPT =
   "You are a focused in-chat AI assistant with exactly 4 capabilities:\n" +
@@ -156,6 +160,7 @@ export class CerebrasAgentService implements AiAgentPort {
       tools: TOOLS,
       tool_choice: "auto",
       max_tokens: 1024,
+      reasoning_effort: REASONING_EFFORT,
     });
 
     const choice = turn1.choices[0];
@@ -178,7 +183,9 @@ export class CerebrasAgentService implements AiAgentPort {
     }
 
     if (!toolName || !toolArgs) {
-      return { reply: directReply ?? "", toolUsed: "direct" };
+      // Nothing salvageable — throw so the provider chain can try the next model
+      if (!directReply) throw new Error("model returned an empty reply");
+      return { reply: directReply, toolUsed: "direct" };
     }
 
     this.logger.log(
@@ -201,9 +208,12 @@ export class CerebrasAgentService implements AiAgentPort {
       this.logger.log(
         `[AGENT] userId=${userId} tool=translate elapsed=${elapsed}ms`,
       );
+      if (!toolResult.trim()) throw new Error("translation returned no text");
       return { reply: toolResult, toolUsed: "translate" };
     }
 
+    // gpt-oss-120b spends part of its budget on reasoning tokens before emitting
+    // content, so keep the synthesis budget generous or content comes back empty.
     const turn2 = await client.chat.completions.create({
       model: MODEL,
       messages: [
@@ -213,7 +223,8 @@ export class CerebrasAgentService implements AiAgentPort {
           content: `${query}\n\n[${toolName} result]: ${toolResult}`,
         },
       ],
-      max_tokens: 512,
+      max_tokens: 1024,
+      reasoning_effort: REASONING_EFFORT,
     });
 
     const elapsed = Date.now() - start;
@@ -221,10 +232,18 @@ export class CerebrasAgentService implements AiAgentPort {
       `[AGENT] userId=${userId} tool=${toolName} elapsed=${elapsed}ms`,
     );
 
-    return {
-      reply: turn2.choices[0].message.content?.trim() ?? "",
-      toolUsed: toolName,
-    };
+    const synthesized = turn2.choices[0]?.message?.content?.trim();
+    if (!synthesized) {
+      this.logger.warn(
+        `[AGENT] userId=${userId} tool=${toolName} synthesis returned empty content ` +
+          `(finish_reason=${turn2.choices[0]?.finish_reason}) — falling back to raw tool result`,
+      );
+      const raw = toolResult.trim();
+      if (!raw) throw new Error("model returned an empty reply");
+      return { reply: raw.slice(0, 2000), toolUsed: toolName };
+    }
+
+    return { reply: synthesized, toolUsed: toolName };
   }
 
   private async executeTool(
@@ -253,6 +272,7 @@ export class CerebrasAgentService implements AiAgentPort {
             { role: "user", content: args["text"] ?? "" },
           ],
           max_tokens: 512,
+          reasoning_effort: REASONING_EFFORT,
         });
         return completion.choices[0]?.message?.content?.trim() ?? "";
       }
