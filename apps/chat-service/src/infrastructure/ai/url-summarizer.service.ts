@@ -2,9 +2,10 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as cheerio from "cheerio";
 import Groq from "groq-sdk";
+import { GROQ_TEXT_MODEL } from "./ai-models";
 
 const TIMEOUT_MS = 5_000;
-const MODEL = "llama-3.3-70b-versatile";
+const MODEL = GROQ_TEXT_MODEL;
 
 @Injectable()
 export class UrlSummarizerService {

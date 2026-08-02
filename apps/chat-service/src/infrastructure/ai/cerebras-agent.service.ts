@@ -13,13 +13,10 @@ import {
 import { TavilyWebSearchService } from "./tavily-web-search.service";
 import { OpenWeatherService } from "./openweather.service";
 import { UrlSummarizerService } from "./url-summarizer.service";
+import { CEREBRAS_MODEL, REASONING_EFFORT } from "./ai-models";
 
-const MODEL = "gpt-oss-120b";
+const MODEL = CEREBRAS_MODEL;
 const CEREBRAS_BASE_URL = "https://api.cerebras.ai/v1";
-// gpt-oss-120b is a reasoning model and its reasoning tokens are drawn from
-// max_tokens before any content is emitted — an unconstrained effort can burn
-// the whole budget and return finish_reason=length with empty content.
-const REASONING_EFFORT = "low" as const;
 
 const SYSTEM_PROMPT =
   "You are a focused in-chat AI assistant with exactly 4 capabilities:\n" +

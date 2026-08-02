@@ -58,6 +58,8 @@ import {
 } from "./infrastructure/persistence/mongoose/schemas/persona-message.schema";
 import { MongoosePersonaMessageRepository } from "./infrastructure/persistence/mongoose/mongoose-persona-message.repository";
 import { PersonaGroqAgentService } from "./infrastructure/ai/persona-groq-agent.service";
+import { CerebrasPersonaAgentService } from "./infrastructure/ai/cerebras-persona-agent.service";
+import { PersonaAgentFallbackService } from "./infrastructure/ai/persona-agent-fallback.service";
 import { PersonaRateLimiterService } from "./infrastructure/ai/persona-rate-limiter.service";
 import { RunPersonaAgentUseCase } from "./application/use-cases/run-persona-agent.use-case";
 import { GetPersonaHistoryUseCase } from "./application/use-cases/get-persona-history.use-case";
@@ -170,6 +172,9 @@ import { UserProfileUpdatesConsumer } from "./infrastructure/messaging/user-prof
 
     // Persona AI
     PersonaGroqAgentService,
+    CerebrasPersonaAgentService,
+    PersonaAgentFallbackService,
+    { provide: "PersonaAgent", useClass: PersonaAgentFallbackService },
     PersonaRateLimiterService,
     RunPersonaAgentUseCase,
     GetPersonaHistoryUseCase,

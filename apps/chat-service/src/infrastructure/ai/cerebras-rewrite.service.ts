@@ -9,8 +9,9 @@ import {
   AiRewriterPort,
   RewriteTone,
 } from "../../application/ports/ai-rewriter.port";
+import { CEREBRAS_MODEL, REASONING_EFFORT } from "./ai-models";
 
-const MODEL = "gpt-oss-120b";
+const MODEL = CEREBRAS_MODEL;
 const CEREBRAS_BASE_URL = "https://api.cerebras.ai/v1";
 
 const SYSTEM_INSTRUCTION =
@@ -59,9 +60,7 @@ export class CerebrasRewriteService implements AiRewriterPort {
         ],
         max_tokens: 1024,
         temperature: 0.7,
-        // gpt-oss-120b draws reasoning tokens from max_tokens before emitting
-        // content — keep the effort low so the budget goes to the rewrite itself
-        reasoning_effort: "low",
+        reasoning_effort: REASONING_EFFORT,
       });
 
       const content = result.choices[0]?.message?.content?.trim() ?? "";

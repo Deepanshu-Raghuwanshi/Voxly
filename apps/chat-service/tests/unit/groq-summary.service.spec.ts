@@ -3,6 +3,7 @@ import * as sinon from "sinon";
 import { ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { GroqSummaryService } from "../../src/infrastructure/ai/groq-summary.service";
+import { GROQ_TEXT_MODEL } from "../../src/infrastructure/ai/ai-models";
 
 type InternalGroq = {
   chat: { completions: { create: sinon.SinonStub } };
@@ -77,7 +78,7 @@ describe("GroqSummaryService (Unit)", () => {
       await service.summarize(MESSAGES);
 
       const call = createStub.firstCall.args[0];
-      expect(call.model).to.equal("meta-llama/llama-4-scout-17b-16e-instruct");
+      expect(call.model).to.equal(GROQ_TEXT_MODEL);
     });
 
     it("should send a system message as the first message", async () => {

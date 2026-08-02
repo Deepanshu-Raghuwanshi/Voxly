@@ -6,8 +6,14 @@ import type {
   ChatCompletionMessageParam,
 } from "groq-sdk/resources/chat/completions";
 import { TavilyWebSearchService } from "./tavily-web-search.service";
+import { GROQ_TOOL_MODEL, REASONING_EFFORT } from "./ai-models";
+import {
+  PersonaAgentPort,
+  PersonaRunParams,
+  PersonaAgentResult,
+} from "../../application/ports/persona-agent.port";
 
-const MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
+const MODEL = GROQ_TOOL_MODEL;
 
 const WEB_SEARCH_TOOL: ChatCompletionTool = {
   type: "function",
@@ -29,21 +35,8 @@ const SYNTHESIS_SUFFIX =
   "turn those results into a clear, concise answer in your persona's voice (under 300 words). " +
   "Maintain your tone and style. Use the tool result directly.";
 
-export interface PersonaRunParams {
-  query: string;
-  context: Array<{ role: "user" | "assistant"; content: string }>;
-  userId: string;
-  systemPrompt: string;
-  useWebSearch: boolean;
-}
-
-export interface PersonaAgentResult {
-  reply: string;
-  toolUsed: "web_search" | "direct";
-}
-
 @Injectable()
-export class PersonaGroqAgentService {
+export class PersonaGroqAgentService implements PersonaAgentPort {
   private readonly logger = new Logger(PersonaGroqAgentService.name);
   private readonly groq: Groq;
 
@@ -72,6 +65,7 @@ export class PersonaGroqAgentService {
         model: MODEL,
         messages,
         max_tokens: 1024,
+        reasoning_effort: REASONING_EFFORT,
       });
       return {
         reply: response.choices[0].message.content?.trim() ?? "",
@@ -86,6 +80,7 @@ export class PersonaGroqAgentService {
       tools: [WEB_SEARCH_TOOL],
       tool_choice: "auto",
       max_tokens: 1024,
+      reasoning_effort: REASONING_EFFORT,
     });
 
     const choice = turn1.choices[0];
@@ -101,6 +96,7 @@ export class PersonaGroqAgentService {
         model: MODEL,
         messages,
         max_tokens: 1024,
+        reasoning_effort: REASONING_EFFORT,
       });
       return {
         reply: fallback.choices[0].message.content?.trim() ?? "",
@@ -117,6 +113,7 @@ export class PersonaGroqAgentService {
         model: MODEL,
         messages,
         max_tokens: 1024,
+        reasoning_effort: REASONING_EFFORT,
       });
       return {
         reply: fallback.choices[0].message.content?.trim() ?? "",
@@ -140,6 +137,7 @@ export class PersonaGroqAgentService {
         model: MODEL,
         messages,
         max_tokens: 1024,
+        reasoning_effort: REASONING_EFFORT,
       });
       const base = fallback.choices[0].message.content?.trim() ?? "";
       return {
@@ -159,6 +157,7 @@ export class PersonaGroqAgentService {
         },
       ],
       max_tokens: 768,
+      reasoning_effort: REASONING_EFFORT,
     });
 
     return {

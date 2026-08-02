@@ -6,8 +6,9 @@ import {
 import { ConfigService } from "@nestjs/config";
 import OpenAI from "openai";
 import { AiSummarizerPort } from "../../application/ports/ai-summarizer.port";
+import { CEREBRAS_MODEL, REASONING_EFFORT } from "./ai-models";
 
-const MODEL = "gpt-oss-120b";
+const MODEL = CEREBRAS_MODEL;
 const CEREBRAS_BASE_URL = "https://api.cerebras.ai/v1";
 
 const SYSTEM_INSTRUCTION =
@@ -62,9 +63,7 @@ export class CerebrasSummaryService implements AiSummarizerPort {
         ],
         max_tokens: 800,
         temperature: 0.3,
-        // gpt-oss-120b draws reasoning tokens from max_tokens before emitting
-        // content — keep the effort low so the budget goes to the summary itself
-        reasoning_effort: "low",
+        reasoning_effort: REASONING_EFFORT,
       });
 
       const raw = result.choices[0]?.message?.content?.trim() ?? "";
