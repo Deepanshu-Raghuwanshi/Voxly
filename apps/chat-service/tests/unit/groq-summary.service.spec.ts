@@ -3,7 +3,10 @@ import * as sinon from "sinon";
 import { ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { GroqSummaryService } from "../../src/infrastructure/ai/groq-summary.service";
-import { GROQ_TEXT_MODEL } from "../../src/infrastructure/ai/ai-models";
+import {
+  GROQ_MODEL,
+  REASONING_EFFORT,
+} from "../../src/infrastructure/ai/ai-models";
 
 type InternalGroq = {
   chat: { completions: { create: sinon.SinonStub } };
@@ -73,12 +76,16 @@ describe("GroqSummaryService (Unit)", () => {
       expect(userMsg.content).to.include("Them: Yes, Saturday works for me!");
     });
 
-    it("should use the correct model name", async () => {
+    it("uses the shared model and reserves tokens for reasoning and summary text", async () => {
       createStub.resolves(makeResponse("• summary"));
       await service.summarize(MESSAGES);
 
       const call = createStub.firstCall.args[0];
-      expect(call.model).to.equal(GROQ_TEXT_MODEL);
+      expect(call).to.include({
+        model: GROQ_MODEL,
+        reasoning_effort: REASONING_EFFORT,
+        max_completion_tokens: 1024,
+      });
     });
 
     it("should send a system message as the first message", async () => {

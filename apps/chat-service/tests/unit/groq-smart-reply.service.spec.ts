@@ -3,6 +3,10 @@ import * as sinon from "sinon";
 import { ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { GroqSmartReplyService } from "../../src/infrastructure/ai/groq-smart-reply.service";
+import {
+  GROQ_MODEL,
+  REASONING_EFFORT,
+} from "../../src/infrastructure/ai/ai-models";
 
 type InternalGroq = {
   chat: { completions: { create: sinon.SinonStub } };
@@ -96,6 +100,11 @@ describe("GroqSmartReplyService (Unit)", () => {
       const result = await service.generateReplies(MESSAGES);
 
       expect(result).to.have.length(3);
+      expect(createStub.firstCall.args[0]).to.include({
+        model: GROQ_MODEL,
+        reasoning_effort: REASONING_EFFORT,
+        max_completion_tokens: 512,
+      });
     });
 
     it("should throw ServiceUnavailableException when Groq returns only 1 valid line", async () => {

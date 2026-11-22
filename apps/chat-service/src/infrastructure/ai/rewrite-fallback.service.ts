@@ -6,7 +6,7 @@ import {
 import { GroqRewriteService } from "./groq-rewrite.service";
 import { CerebrasRewriteService } from "./cerebras-rewrite.service";
 import { runWithFallbackChain } from "./ai-provider-chain";
-import { GROQ_TEXT_MODEL, CEREBRAS_MODEL } from "./ai-models";
+import { GROQ_MODEL, CEREBRAS_MODEL } from "./ai-models";
 
 @Injectable()
 export class RewriteFallbackService implements AiRewriterPort {
@@ -22,7 +22,7 @@ export class RewriteFallbackService implements AiRewriterPort {
       [
         {
           name: "groq",
-          model: GROQ_TEXT_MODEL,
+          model: GROQ_MODEL,
           feature: "rewrite",
           fn: () => this.groq.rewrite(text, tone),
         },

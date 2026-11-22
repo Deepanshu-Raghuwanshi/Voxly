@@ -2,10 +2,9 @@ import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import * as cheerio from "cheerio";
 import Groq from "groq-sdk";
-import { GROQ_TEXT_MODEL } from "./ai-models";
+import { GROQ_MODEL, REASONING_EFFORT } from "./ai-models";
 
 const TIMEOUT_MS = 5_000;
-const MODEL = GROQ_TEXT_MODEL;
 
 @Injectable()
 export class UrlSummarizerService {
@@ -66,7 +65,7 @@ export class UrlSummarizerService {
     }
 
     const completion = await this.groq.chat.completions.create({
-      model: MODEL,
+      model: GROQ_MODEL,
       messages: [
         {
           role: "system",
@@ -75,7 +74,8 @@ export class UrlSummarizerService {
         },
         { role: "user", content: rawText },
       ],
-      max_tokens: 512,
+      max_completion_tokens: 1024,
+      reasoning_effort: REASONING_EFFORT,
     });
 
     return (

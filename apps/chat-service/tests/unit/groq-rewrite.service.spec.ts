@@ -3,6 +3,10 @@ import * as sinon from "sinon";
 import { ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { GroqRewriteService } from "../../src/infrastructure/ai/groq-rewrite.service";
+import {
+  GROQ_MODEL,
+  REASONING_EFFORT,
+} from "../../src/infrastructure/ai/ai-models";
 
 type InternalGroq = {
   chat: { completions: { create: sinon.SinonStub } };
@@ -40,6 +44,11 @@ describe("GroqRewriteService (Unit)", () => {
 
       expect(result).to.equal("Fixed text.");
       expect(createStub.calledOnce).to.equal(true);
+      expect(createStub.firstCall.args[0]).to.include({
+        model: GROQ_MODEL,
+        reasoning_effort: REASONING_EFFORT,
+        max_completion_tokens: 2048,
+      });
     });
 
     it("should include the input text in the user message sent to Groq", async () => {

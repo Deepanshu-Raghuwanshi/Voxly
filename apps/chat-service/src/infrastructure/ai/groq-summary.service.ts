@@ -6,9 +6,8 @@ import {
 import { ConfigService } from "@nestjs/config";
 import Groq from "groq-sdk";
 import { AiSummarizerPort } from "../../application/ports/ai-summarizer.port";
-import { GROQ_TEXT_MODEL } from "./ai-models";
+import { GROQ_MODEL, REASONING_EFFORT } from "./ai-models";
 
-const MODEL = GROQ_TEXT_MODEL;
 const TIMEOUT_MS = 15_000;
 
 const SYSTEM_INSTRUCTION =
@@ -53,12 +52,13 @@ export class GroqSummaryService implements AiSummarizerPort {
   ): Promise<string> {
     try {
       const result = await this.groq.chat.completions.create({
-        model: MODEL,
+        model: GROQ_MODEL,
         messages: [
           { role: "system", content: SYSTEM_INSTRUCTION },
           { role: "user", content: buildPrompt(messages) },
         ],
-        max_tokens: 512,
+        max_completion_tokens: 1024,
+        reasoning_effort: REASONING_EFFORT,
         temperature: 0.3,
       });
 

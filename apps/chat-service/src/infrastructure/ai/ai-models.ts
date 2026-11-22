@@ -1,26 +1,7 @@
-/**
- * Model ids for every AI provider, in one place.
- *
- * These were previously duplicated across each service and again in the
- * fallback-chain log labels. When Groq decommissioned
- * `meta-llama/llama-4-scout-17b-16e-instruct` every Groq call started failing
- * with 404 model_not_found, and the log labels had to be kept in sync by hand.
- * Import from here so a provider retiring a model is a one-line change.
- */
+// All generative features share this model. Groq adds a provider namespace.
+const MODEL_ID = "gpt-oss-120b";
+export const GROQ_MODEL = `openai/${MODEL_ID}`;
+export const CEREBRAS_MODEL = MODEL_ID;
 
-/** Groq, tool-calling paths. Reasoning model — always pass GROQ_REASONING_EFFORT. */
-export const GROQ_TOOL_MODEL = "openai/gpt-oss-120b";
-
-/** Groq, plain completions. Non-reasoning, so max_tokens is spent purely on output. */
-export const GROQ_TEXT_MODEL = "llama-3.3-70b-versatile";
-
-/** Cerebras, all features. Reasoning model — always pass CEREBRAS_REASONING_EFFORT. */
-export const CEREBRAS_MODEL = "gpt-oss-120b";
-
-/**
- * gpt-oss models draw reasoning tokens from max_tokens before emitting any
- * content, so an unconstrained effort can burn the whole budget and return
- * finish_reason=length with empty content. Every call to a gpt-oss model must
- * pass this.
- */
+// GPT-OSS uses its completion budget for reasoning and visible output.
 export const REASONING_EFFORT = "low" as const;

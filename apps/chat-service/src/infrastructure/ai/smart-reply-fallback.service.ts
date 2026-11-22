@@ -3,7 +3,7 @@ import { AiSmartReplierPort } from "../../application/ports/ai-smart-reply.port"
 import { GroqSmartReplyService } from "./groq-smart-reply.service";
 import { CerebrasSmartReplyService } from "./cerebras-smart-reply.service";
 import { runWithFallbackChain } from "./ai-provider-chain";
-import { GROQ_TEXT_MODEL, CEREBRAS_MODEL } from "./ai-models";
+import { GROQ_MODEL, CEREBRAS_MODEL } from "./ai-models";
 
 @Injectable()
 export class SmartReplyFallbackService implements AiSmartReplierPort {
@@ -21,7 +21,7 @@ export class SmartReplyFallbackService implements AiSmartReplierPort {
       [
         {
           name: "groq",
-          model: GROQ_TEXT_MODEL,
+          model: GROQ_MODEL,
           feature: "smart_reply",
           fn: () => this.groq.generateReplies(messages),
         },

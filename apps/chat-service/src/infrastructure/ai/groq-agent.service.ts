@@ -10,9 +10,9 @@ import {
 import { TavilyWebSearchService } from "./tavily-web-search.service";
 import { OpenWeatherService } from "./openweather.service";
 import { UrlSummarizerService } from "./url-summarizer.service";
-import { GROQ_TOOL_MODEL, REASONING_EFFORT } from "./ai-models";
+import { GROQ_MODEL, REASONING_EFFORT } from "./ai-models";
 
-const MODEL = GROQ_TOOL_MODEL;
+const MODEL = GROQ_MODEL;
 
 // Turn 1: select the right tool (scope filtering lives here)
 const SYSTEM_PROMPT =

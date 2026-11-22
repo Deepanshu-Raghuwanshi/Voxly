@@ -9,9 +9,7 @@ import {
   AiRewriterPort,
   RewriteTone,
 } from "../../application/ports/ai-rewriter.port";
-import { GROQ_TEXT_MODEL } from "./ai-models";
-
-const MODEL = GROQ_TEXT_MODEL;
+import { GROQ_MODEL, REASONING_EFFORT } from "./ai-models";
 
 const SYSTEM_INSTRUCTION =
   "You are a message rewriting assistant embedded in a chat application. " +
@@ -49,12 +47,13 @@ export class GroqRewriteService implements AiRewriterPort {
   async rewrite(text: string, tone: RewriteTone): Promise<string> {
     try {
       const result = await this.groq.chat.completions.create({
-        model: MODEL,
+        model: GROQ_MODEL,
         messages: [
           { role: "system", content: SYSTEM_INSTRUCTION },
           { role: "user", content: PROMPTS[tone](text) },
         ],
-        max_tokens: 1024,
+        max_completion_tokens: 2048,
+        reasoning_effort: REASONING_EFFORT,
         temperature: 0.7,
       });
 
