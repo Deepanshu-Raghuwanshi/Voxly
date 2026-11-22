@@ -1,4 +1,5 @@
 import apiClient from '../../../shared/lib/apiClient';
+import type { UserTypes } from '@shared-types';
 
 export interface UserProfile {
   id: string;
@@ -40,6 +41,16 @@ export interface Friendship {
 export const friendsService = {
   async getFriends(): Promise<UserProfile[]> {
     const response = await apiClient.get<UserProfile[]>('/friends');
+    return response.data;
+  },
+
+  async getPresence(userIds: string[], signal: AbortSignal) {
+    const response = await apiClient.get<
+      UserTypes.components['schemas']['FriendPresence'][]
+    >('/friends/presence', {
+      params: { ids: userIds.join(',') },
+      signal,
+    });
     return response.data;
   },
 

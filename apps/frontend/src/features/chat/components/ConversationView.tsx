@@ -17,10 +17,7 @@ import {
   useSummarizeConversation,
 } from "../hooks/useChat";
 import { useChatStore } from "../store/useChatStore";
-import {
-  usePresence,
-  joinConversationRoom,
-} from "../../friends/hooks/usePresence";
+import { joinConversationRoom } from "../../friends/hooks/usePresence";
 import type { Message } from "@shared-types";
 
 interface ConversationViewProps {
@@ -30,9 +27,6 @@ interface ConversationViewProps {
 export const ConversationView = ({ conversationId }: ConversationViewProps) => {
   const t = useTranslations("features.chat.errors");
   const router = useRouter();
-
-  // Keep socket alive and receiving message.new events
-  usePresence();
 
   const setActiveConversation = useChatStore(
     (state) => state.setActiveConversation,

@@ -5,7 +5,7 @@ export interface FriendshipRepository {
 
   findByUsers(userId1: string, userId2: string): Promise<Friendship | null>;
 
-  findByUserId(userId: string): Promise<Friendship[]>;
+  findByUserId(userId: string, otherUserIds?: string[]): Promise<Friendship[]>;
 
   delete(id: string): Promise<void>;
 

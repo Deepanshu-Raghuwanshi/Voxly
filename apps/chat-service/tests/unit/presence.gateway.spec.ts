@@ -2,12 +2,15 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import { JwtService } from "@nestjs/jwt";
 import { ClientKafka } from "@nestjs/microservices";
-import { Socket, Server } from "socket.io";
+import { Socket, Namespace } from "socket.io";
 import { PresenceGateway } from "../../src/interfaces/gateways/presence.gateway";
 import { PresenceRepository } from "../../src/application/ports/presence.repository";
 
 function makeGateway(): PresenceGateway {
-  const presenceRepoMock = { setStatus: sinon.stub().resolves() };
+  const presenceRepoMock = {
+    touchSocket: sinon.stub().resolves(false),
+    removeSocket: sinon.stub().resolves(false),
+  };
   const kafkaClientMock = { emit: sinon.stub() };
   const jwtServiceMock = { verify: sinon.stub() };
   return new PresenceGateway(
@@ -35,16 +38,13 @@ function makeClient(userId: string | null) {
 
 describe("PresenceGateway — typing handlers (Unit)", () => {
   let gateway: PresenceGateway;
-  const originalNodeEnv = process.env.NODE_ENV;
-
   beforeEach(() => {
     gateway = makeGateway();
     // directUserId override in getUserId is active for any non-production env
-    process.env.NODE_ENV = "test";
+    sinon.stub(process, "env").value({ ...process.env, NODE_ENV: "test" });
   });
 
   afterEach(() => {
-    process.env.NODE_ENV = originalNodeEnv;
     sinon.restore();
   });
 
@@ -109,7 +109,7 @@ describe("PresenceGateway — typing handlers (Unit)", () => {
     it("should NOT call this.server.to() — broadcast must exclude the sender via client.to()", () => {
       const { client } = makeClient("user-a");
       const serverToSpy = sinon.spy();
-      gateway.server = { to: serverToSpy } as unknown as Server;
+      gateway.server = { to: serverToSpy } as unknown as Namespace;
 
       gateway.handleTypingStart(client as unknown as Socket, {
         conversationId: "conv-1",
@@ -180,7 +180,7 @@ describe("PresenceGateway — typing handlers (Unit)", () => {
     it("should NOT call this.server.to() — broadcast must exclude the sender via client.to()", () => {
       const { client } = makeClient("user-a");
       const serverToSpy = sinon.spy();
-      gateway.server = { to: serverToSpy } as unknown as Server;
+      gateway.server = { to: serverToSpy } as unknown as Namespace;
 
       gateway.handleTypingStop(client as unknown as Socket, {
         conversationId: "conv-1",

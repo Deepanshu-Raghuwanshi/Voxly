@@ -9,6 +9,7 @@ import { useAuthStore } from "../../auth/store/useAuthStore";
 import { useChatStore } from "../store/useChatStore";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { usePresenceStatus } from "../../friends/hooks/usePresenceStatus";
 
 interface ConversationHeaderProps {
   conversation: Conversation;
@@ -32,6 +33,7 @@ export const ConversationHeader = ({
   const other = conversation.participants.find(
     (p) => p.userId !== currentUserId,
   );
+  const isOnline = usePresenceStatus(other?.userId, other?.isOnline);
   const otherIsTyping = other
     ? (typingUsersForConversation ?? []).includes(other.userId)
     : false;
@@ -54,7 +56,7 @@ export const ConversationHeader = ({
           username={other?.username}
           size="md"
         />
-        {other?.isOnline && (
+        {isOnline && (
           <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-card rounded-full" />
         )}
       </div>
@@ -66,14 +68,14 @@ export const ConversationHeader = ({
             "text-xs",
             otherIsTyping
               ? "text-primary animate-pulse"
-              : other?.isOnline
+              : isOnline
                 ? "text-green-500"
                 : "text-foreground/40",
           )}
         >
           {otherIsTyping
             ? t("typing")
-            : other?.isOnline
+            : isOnline
               ? t("online")
               : t("offline")}
         </p>

@@ -226,6 +226,58 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/friends/presence": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** Get current presence for selected friends */
+    get: {
+      parameters: {
+        query: {
+          ids: string[];
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description Presence for requested IDs that belong to the caller's friends. */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            "application/json": components["schemas"]["FriendPresence"][];
+          };
+        };
+        /** @description Missing or invalid user IDs */
+        400: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+        /** @description Unauthorized */
+        401: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/friends/requests": {
     parameters: {
       query?: never;
@@ -438,6 +490,10 @@ export interface components {
       countryCode?: string;
       status?: string;
       theme?: components["schemas"]["Theme"];
+    };
+    FriendPresence: {
+      id: string;
+      isOnline: boolean;
     };
     UserProfile: {
       /** Format: uuid */
