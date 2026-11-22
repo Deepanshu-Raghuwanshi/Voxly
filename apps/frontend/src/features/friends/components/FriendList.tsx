@@ -9,7 +9,6 @@ import {
   useSendFriendRequest,
   useRemoveFriend,
 } from "../hooks/useFriends";
-import { usePresence } from "../hooks/usePresence";
 import { FriendCard } from "./FriendCard";
 import { RecommendationList } from "./RecommendationList";
 import { UserSearchPanel } from "./UserSearchPanel";
@@ -30,8 +29,6 @@ export const FriendList = ({ activeTab }: FriendListProps) => {
   const router = useRouter();
   const currentUser = useAuthStore((state) => state.user);
 
-  // Register presence listener
-  usePresence();
 
   const { data: friends, isLoading: isLoadingFriends } = useFriends();
   const { data: requests, isLoading: isLoadingRequests } =

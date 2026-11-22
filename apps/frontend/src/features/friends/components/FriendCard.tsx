@@ -3,6 +3,7 @@ import { User, UserX, Check, X, MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { cn } from "../../../shared/utils/cn";
+import { usePresenceStatus } from "../hooks/usePresenceStatus";
 
 interface FriendCardProps {
   userId: string;
@@ -22,7 +23,7 @@ export const FriendCard: React.FC<FriendCardProps> = ({
   username,
   fullName,
   avatarUrl,
-  isOnline,
+  isOnline: initialStatus,
   isIncomingRequest,
   onAccept,
   onReject,
@@ -30,6 +31,10 @@ export const FriendCard: React.FC<FriendCardProps> = ({
   onMessage,
 }) => {
   const t = useTranslations("features.friends.buttons");
+  const isOnline = usePresenceStatus(
+    initialStatus === undefined ? undefined : userId,
+    initialStatus,
+  );
 
   return (
     <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow">

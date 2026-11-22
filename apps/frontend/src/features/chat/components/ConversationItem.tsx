@@ -6,6 +6,7 @@ import { Avatar } from "../../../shared/components/ui/Avatar";
 import { cn } from "../../../shared/utils/cn";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 import { useTranslations } from "next-intl";
+import { usePresenceStatus } from "../../friends/hooks/usePresenceStatus";
 
 interface ConversationItemProps {
   conversation: Conversation;
@@ -33,6 +34,7 @@ export const ConversationItem = ({
   const other = conversation.participants.find(
     (p) => p.userId !== currentUserId,
   );
+  const isOnline = usePresenceStatus(other?.userId, other?.isOnline);
   const displayName = other?.fullName || other?.username || "Unknown";
   const unread = conversation.unreadCount ?? 0;
   const lastMsg = conversation.lastMessage;
@@ -54,7 +56,7 @@ export const ConversationItem = ({
           username={other?.username}
           size="md"
         />
-        {other?.isOnline && (
+        {isOnline && (
           <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-card rounded-full" />
         )}
       </div>

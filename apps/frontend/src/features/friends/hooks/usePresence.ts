@@ -1,11 +1,18 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { UserProfile } from "../services/friends.service";
 import { Message, MessageListResponse, Reaction } from "@shared-types";
 import { InfiniteData } from "@tanstack/react-query";
 import { io, Socket } from "socket.io-client";
 import { chatService } from "../../chat/services/chat.service";
 import { useChatStore } from "../../chat/store/useChatStore";
+import {
+  clearPresence,
+  onPresenceUsersAdded,
+  refreshPresence,
+  updatePresence,
+} from "./usePresenceStatus";
+
+const PRESENCE_REFRESH_MS = 60_000;
 
 interface PresenceUpdate {
   userId: string;
@@ -104,11 +111,9 @@ export const emitTypingStop = (conversationId: string) => {
 
 /**
  * Opens the shared presence socket and registers every realtime handler.
- * Safe to call from several components — the module-level `socket` guard means
- * only the first caller connects and the handlers are registered once.
- * Pass `enabled: false` to hold off while the user is unauthenticated.
+ * The root navbar owns the socket for the authenticated session.
  */
-export const usePresence = (enabled: boolean = true) => {
+export const usePresence = (enabled: boolean = true, userId?: string) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -116,25 +121,54 @@ export const usePresence = (enabled: boolean = true) => {
     if (!socket) {
       const CHAT_SERVICE_URL =
         process.env.NEXT_PUBLIC_CHAT_SERVICE_URL || "http://localhost:3003";
-      socket = io(`${CHAT_SERVICE_URL}/presence`, {
+      const connection = io(`${CHAT_SERVICE_URL}/presence`, {
         withCredentials: true,
         transports: ["websocket", "polling"],
       });
+      socket = connection;
 
-      socket.on("presence.updated", (data: PresenceUpdate) => {
-        queryClient.setQueryData<UserProfile[]>(["friends"], (oldFriends) => {
-          if (!oldFriends) return oldFriends;
+      let refreshTimer: ReturnType<typeof setTimeout> | undefined;
+      let pendingRefresh: AbortController | undefined;
+      const scheduleRefresh = () => {
+        clearTimeout(refreshTimer);
+        if (document.visibilityState === "hidden") return;
 
-          return oldFriends.map((friend) => {
-            if (friend.id === data.userId) {
-              return {
-                ...friend,
-                isOnline: data.status === "ONLINE",
-              };
-            }
-            return friend;
-          });
-        });
+        refreshTimer = setTimeout(() => {
+          pendingRefresh?.abort();
+          const controller = new AbortController();
+          pendingRefresh = controller;
+          void refreshPresence(controller.signal)
+            .then((refreshed) => {
+              // The HTTP client may have refreshed the session after an
+              // expired cookie caused Socket.IO to reject the handshake.
+              if (
+                refreshed &&
+                !controller.signal.aborted &&
+                !connection.active &&
+                !connection.connected
+              ) {
+                connection.connect();
+              }
+            })
+            .catch(() => {
+              // The next focus, reconnect or interval will retry.
+            });
+        }, 100);
+      };
+      const unsubscribe = onPresenceUsersAdded(scheduleRefresh);
+      window.addEventListener("focus", scheduleRefresh);
+      document.addEventListener("visibilitychange", scheduleRefresh);
+      const refreshInterval = setInterval(scheduleRefresh, PRESENCE_REFRESH_MS);
+      scheduleRefresh();
+
+      connection.on("connect", () => {
+        const { activeConversationId } = useChatStore.getState();
+        if (activeConversationId) joinConversationRoom(activeConversationId);
+        scheduleRefresh();
+      });
+
+      connection.on("presence.updated", (data: PresenceUpdate) => {
+        updatePresence(data.userId, data.status === "ONLINE");
       });
 
       socket.on("friendship.removed", () => {
@@ -152,7 +186,9 @@ export const usePresence = (enabled: boolean = true) => {
 
       socket.on("friend.request.accepted", () => {
         queryClient.invalidateQueries({ queryKey: ["friends"] });
-        queryClient.invalidateQueries({ queryKey: ["friend-requests", "outgoing"] });
+        queryClient.invalidateQueries({
+          queryKey: ["friend-requests", "outgoing"],
+        });
         queryClient.invalidateQueries({ queryKey: ["friend-recommendations"] });
       });
 
@@ -405,10 +441,18 @@ export const usePresence = (enabled: boolean = true) => {
         );
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
       });
+      return () => {
+        unsubscribe();
+        window.removeEventListener("focus", scheduleRefresh);
+        document.removeEventListener("visibilitychange", scheduleRefresh);
+        clearInterval(refreshInterval);
+        clearTimeout(refreshTimer);
+        pendingRefresh?.abort();
+        connection.removeAllListeners();
+        connection.disconnect();
+        socket = null;
+        clearPresence();
+      };
     }
-
-    return () => {
-      // Socket stays alive across components — no disconnect on unmount
-    };
-  }, [queryClient, enabled]);
+  }, [queryClient, enabled, userId]);
 };

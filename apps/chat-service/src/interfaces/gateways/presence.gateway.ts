@@ -3,12 +3,13 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   SubscribeMessage,
   MessageBody,
   ConnectedSocket,
 } from "@nestjs/websockets";
-import { Server, Socket } from "socket.io";
-import { Inject, Logger } from "@nestjs/common";
+import { Namespace, Socket } from "socket.io";
+import { Inject, Logger, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 import { ClientKafka } from "@nestjs/microservices";
 import { JwtService } from "@nestjs/jwt";
 import { PresenceRepository } from "../../application/ports/presence.repository";
@@ -18,6 +19,8 @@ import {
   UserPresenceUpdatedEventV1,
 } from "@kafka-events";
 
+const PRESENCE_RENEWAL_MS = 30_000;
+
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -26,12 +29,20 @@ import {
   namespace: "presence",
 })
 export class PresenceGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements
+    OnGatewayInit<Namespace>,
+    OnGatewayConnection,
+    OnGatewayDisconnect,
+    OnModuleInit,
+    OnModuleDestroy
 {
   private readonly logger = new Logger(PresenceGateway.name);
+  private readonly presenceSockets = new Map<string, string>();
+  private renewalTimer?: ReturnType<typeof setInterval>;
+  private renewing = false;
 
   @WebSocketServer()
-  server!: Server;
+  server!: Namespace;
 
   constructor(
     @Inject("PresenceRepository")
@@ -41,42 +52,94 @@ export class PresenceGateway
     private readonly jwtService: JwtService,
   ) {}
 
+  afterInit(namespace: Namespace): void {
+    namespace.use((client, next) => {
+      const userId = this.getUserId(client);
+      if (!userId) {
+        next(new Error("Unauthorized"));
+        return;
+      }
+      client.data.presenceUserId = userId;
+      next();
+    });
+  }
+
+  onModuleInit(): void {
+    this.renewalTimer = setInterval(() => {
+      void this.renewPresence();
+    }, PRESENCE_RENEWAL_MS).unref();
+  }
+
+  onModuleDestroy(): void {
+    clearInterval(this.renewalTimer);
+    this.presenceSockets.clear();
+  }
+
   async handleConnection(client: Socket) {
-    const userId = this.getUserId(client);
-    if (!userId) {
-      client.disconnect();
-      return;
-    }
+    const userId: string | undefined = client.data.presenceUserId;
+    if (!userId) return;
 
-    this.logger.debug(`User connected: ${userId}`);
     await client.join(`user:${userId}`);
-    await this.presenceRepository.setStatus(userId, PresenceStatus.ONLINE);
+    if (!client.connected) return;
 
-    const event: UserPresenceUpdatedEventV1 = {
-      userId,
-      status: PresenceStatus.ONLINE,
-    };
-    this.kafkaClient.emit(UserTopics.USER_PRESENCE_UPDATED, event);
-
-    // Notify all clients about the status change
-    this.server.emit("presence.updated", event);
+    this.presenceSockets.set(client.id, userId);
+    await this.touchPresence(userId, client.id);
   }
 
   async handleDisconnect(client: Socket) {
-    const userId = this.getUserId(client);
+    const userId = this.presenceSockets.get(client.id);
     if (!userId) return;
 
-    this.logger.debug(`User disconnected: ${userId}`);
-    await this.presenceRepository.setStatus(userId, PresenceStatus.OFFLINE);
+    this.presenceSockets.delete(client.id);
+    try {
+      if (await this.presenceRepository.removeSocket(userId, client.id)) {
+        this.publishPresence(userId, PresenceStatus.OFFLINE);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Could not remove presence for socket ${client.id}: ${error}`,
+      );
+    }
+  }
 
-    const event: UserPresenceUpdatedEventV1 = {
-      userId,
-      status: PresenceStatus.OFFLINE,
-    };
-    this.kafkaClient.emit(UserTopics.USER_PRESENCE_UPDATED, event);
+  private async touchPresence(userId: string, socketId: string): Promise<void> {
+    try {
+      const becameOnline = await this.presenceRepository.touchSocket(
+        userId,
+        socketId,
+      );
+      if (becameOnline) {
+        this.publishPresence(userId, PresenceStatus.ONLINE);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Could not renew presence for socket ${socketId}: ${error}`,
+      );
+    }
+  }
 
-    // Notify all clients about the status change
+  private async renewPresence(): Promise<void> {
+    if (this.renewing) return;
+
+    this.renewing = true;
+    try {
+      // Queue all renewals on the same Redis connection before yielding.
+      // A disconnect removes the socket locally first and queues removal
+      // after any already queued renewal.
+      await Promise.all(
+        Array.from(this.presenceSockets, ([socketId, userId]) =>
+          this.touchPresence(userId, socketId),
+        ),
+      );
+    } finally {
+      this.renewing = false;
+    }
+  }
+
+  private publishPresence(userId: string, status: PresenceStatus): void {
+    const event: UserPresenceUpdatedEventV1 = { userId, status };
     this.server.emit("presence.updated", event);
+    this.kafkaClient.emit(UserTopics.USER_PRESENCE_UPDATED, event);
   }
 
   @SubscribeMessage("join.conversation")
@@ -134,14 +197,20 @@ export class PresenceGateway
 
     // Allow direct userId override only in non-production environments for debugging
     const directUserId = client.handshake.query?.userId;
-    if (process.env.NODE_ENV !== "production" && directUserId)
-      return directUserId as string;
+    if (
+      process.env.NODE_ENV !== "production" &&
+      typeof directUserId === "string" &&
+      directUserId
+    )
+      return directUserId;
 
     if (!accessToken) return null;
 
     try {
       const payload = this.jwtService.verify(accessToken);
-      return payload.sub;
+      return typeof payload.sub === "string" && payload.sub
+        ? payload.sub
+        : null;
     } catch (e) {
       this.logger.error(`Invalid token for presence gateway: ${e}`);
       return null;

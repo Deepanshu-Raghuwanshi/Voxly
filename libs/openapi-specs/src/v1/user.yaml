@@ -110,6 +110,37 @@ paths:
       responses:
         "200":
           description: List of friend IDs
+  /api/v1/friends/presence:
+    get:
+      summary: Get current presence for selected friends
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          style: form
+          explode: false
+          schema:
+            type: array
+            minItems: 1
+            maxItems: 100
+            items:
+              type: string
+              pattern: "^[A-Za-z0-9_-]{1,64}$"
+      responses:
+        "200":
+          description: Presence for requested IDs that belong to the caller's friends.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FriendPresence"
+        "400":
+          description: Missing or invalid user IDs
+        "401":
+          description: Unauthorized
   /api/v1/friends/requests:
     post:
       summary: Send friend request
@@ -264,6 +295,14 @@ components:
         theme:
           $ref: "#/components/schemas/Theme"
 
+    FriendPresence:
+      type: object
+      required: [id, isOnline]
+      properties:
+        id:
+          type: string
+        isOnline:
+          type: boolean
     UserProfile:
       type: object
       required:

@@ -25,7 +25,7 @@ export const Navbar = () => {
   // Both must run before the early return below — hooks cannot be conditional.
   // The navbar is mounted on every authenticated page, so opening the presence
   // socket here keeps the unread badge live outside the chat and friends pages.
-  usePresence(Boolean(isAuthenticated));
+  usePresence(isAuthenticated, user?.id);
   const unreadCount = useTotalUnreadCount();
 
   if (!isAuthenticated) return null;

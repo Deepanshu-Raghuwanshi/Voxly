@@ -19,6 +19,7 @@ import { CloudinaryService } from "./infrastructure/cloudinary/cloudinary.servic
 import { SendFriendRequestUseCase } from "./application/use-cases/send-friend-request.use-case";
 import { RespondToFriendRequestUseCase } from "./application/use-cases/respond-to-friend-request.use-case";
 import { GetFriendsUseCase } from "./application/use-cases/get-friends.use-case";
+import { GetFriendsPresenceUseCase } from "./application/use-cases/get-friends-presence.use-case";
 import { GetIncomingRequestsUseCase } from "./application/use-cases/get-incoming-requests.use-case";
 import { GetOutgoingRequestsUseCase } from "./application/use-cases/get-outgoing-requests.use-case";
 import { GetRecommendationsUseCase } from "./application/use-cases/get-recommendations.use-case";
@@ -74,6 +75,7 @@ import { JwtStrategy } from "./infrastructure/strategies/jwt.strategy";
     SendFriendRequestUseCase,
     RespondToFriendRequestUseCase,
     GetFriendsUseCase,
+    GetFriendsPresenceUseCase,
     GetIncomingRequestsUseCase,
     GetOutgoingRequestsUseCase,
     GetRecommendationsUseCase,

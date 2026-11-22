@@ -1,6 +1,6 @@
 import React from "react";
-import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
+import { renderHook, act, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   QueryClient,
   QueryClientProvider,
@@ -14,6 +14,11 @@ import {
 import { Message, MessageListResponse } from "@shared-types";
 import { chatService } from "../../src/features/chat/services/chat.service";
 import { useChatStore } from "../../src/features/chat/store/useChatStore";
+import {
+  refreshPresence,
+  usePresenceStatus,
+} from "../../src/features/friends/hooks/usePresenceStatus";
+import { friendsService } from "../../src/features/friends/services/friends.service";
 
 // Capture socket event handlers as they are registered so tests can trigger them
 const socketHandlers: Record<string, (data: unknown) => void> = {};
@@ -23,10 +28,19 @@ const mockSocket = {
     socketHandlers[event] = handler;
   }),
   emit: vi.fn(),
+  connect: vi.fn(),
+  disconnect: vi.fn(),
+  removeAllListeners: vi.fn(),
+  active: true,
+  connected: true,
 };
 
 vi.mock("socket.io-client", () => ({
   io: vi.fn(() => mockSocket),
+}));
+
+vi.mock("../../src/features/friends/services/friends.service", () => ({
+  friendsService: { getPresence: vi.fn().mockResolvedValue([]) },
 }));
 
 vi.mock("../../src/features/chat/services/chat.service", () => ({
@@ -49,9 +63,8 @@ vi.mock("../../src/features/chat/store/useChatStore", () => {
   return { useChatStore: Object.assign(vi.fn(), { getState }) };
 });
 
-// Shared QueryClient — the hook's useEffect closure captures it on first mount.
-// All tests set/read data on this same instance.
 let sharedQueryClient: QueryClient;
+let disablePresence: () => void;
 
 function makeMessage(overrides: Partial<Message>): Message {
   return {
@@ -85,9 +98,9 @@ function getCache(conversationId = "conv-1") {
   ]);
 }
 
-// Mount the hook once so the module-level socket singleton is created and all
-// socket.on handlers are registered. Subsequent tests reuse the same handlers.
-beforeAll(() => {
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(friendsService.getPresence).mockResolvedValue([]);
   sharedQueryClient = new QueryClient({
     defaultOptions: {
       queries: { retry: false },
@@ -99,12 +112,6 @@ beforeAll(() => {
       {children}
     </QueryClientProvider>
   );
-  renderHook(() => usePresence(), { wrapper: Wrapper });
-});
-
-beforeEach(() => {
-  vi.clearAllMocks();
-  sharedQueryClient.clear();
   // Reset useChatStore.getState to default (no active conversation) so tests
   // that don't override it get a clean baseline.
   vi.mocked(useChatStore.getState).mockReturnValue({
@@ -125,6 +132,89 @@ beforeEach(() => {
   });
   vi.mocked(chatService.markRead).mockResolvedValue({
     lastReadAt: new Date().toISOString(),
+  });
+  const owner = renderHook(({ enabled }) => usePresence(enabled), {
+    wrapper: Wrapper,
+    initialProps: { enabled: true },
+  });
+  disablePresence = () => owner.rerender({ enabled: false });
+});
+
+describe("usePresence — status reconciliation", () => {
+  it("shares offline events across indicators and preserves a second observer", () => {
+    const friends = renderHook(() => usePresenceStatus("friend", true));
+    const chat = renderHook(() => usePresenceStatus("friend", true));
+
+    act(() =>
+      socketHandlers["presence.updated"]({
+        userId: "friend",
+        status: "OFFLINE",
+      }),
+    );
+    expect(friends.result.current).toBe(false);
+    expect(chat.result.current).toBe(false);
+
+    friends.unmount();
+    act(() =>
+      socketHandlers["presence.updated"]({
+        userId: "friend",
+        status: "ONLINE",
+      }),
+    );
+    expect(chat.result.current).toBe(true);
+  });
+
+  it("reconciles a missed event on reconnect", async () => {
+    vi.mocked(friendsService.getPresence).mockResolvedValue([
+      { id: "friend", isOnline: true },
+    ]);
+    const indicator = renderHook(() => usePresenceStatus("friend", false));
+    await waitFor(() => expect(indicator.result.current).toBe(true));
+
+    vi.mocked(friendsService.getPresence).mockResolvedValue([
+      { id: "friend", isOnline: false },
+    ]);
+    act(() => socketHandlers.connect(undefined));
+    await waitFor(() => expect(indicator.result.current).toBe(false));
+  });
+
+  it("preserves a socket update received during an older snapshot request", async () => {
+    let resolveSnapshot!: (data: { id: string; isOnline: boolean }[]) => void;
+    vi.mocked(friendsService.getPresence).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSnapshot = resolve;
+      }),
+    );
+    const indicator = renderHook(() => usePresenceStatus("friend", true));
+    const snapshot = refreshPresence(new AbortController().signal);
+    act(() =>
+      socketHandlers["presence.updated"]({
+        userId: "friend",
+        status: "OFFLINE",
+      }),
+    );
+    await act(async () => {
+      resolveSnapshot([{ id: "friend", isOnline: true }]);
+      await snapshot;
+    });
+    expect(indicator.result.current).toBe(false);
+  });
+
+  it("closes the socket and clears its presence values when the session ends", () => {
+    const indicator = renderHook(() => usePresenceStatus("friend", false));
+    act(() =>
+      socketHandlers["presence.updated"]({
+        userId: "friend",
+        status: "ONLINE",
+      }),
+    );
+    expect(indicator.result.current).toBe(true);
+
+    disablePresence();
+
+    expect(mockSocket.removeAllListeners).toHaveBeenCalledOnce();
+    expect(mockSocket.disconnect).toHaveBeenCalledOnce();
+    expect(indicator.result.current).toBe(false);
   });
 });
 

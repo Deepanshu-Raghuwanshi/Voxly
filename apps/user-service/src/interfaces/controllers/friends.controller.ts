@@ -8,6 +8,8 @@ import {
   Query,
   Req,
   UseGuards,
+  BadRequestException,
+  Header,
 } from "@nestjs/common";
 import { ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { Request } from "express";
@@ -15,6 +17,7 @@ import { JwtAuthGuard } from "../../infrastructure/guards/jwt-auth.guard";
 import { SendFriendRequestUseCase } from "../../application/use-cases/send-friend-request.use-case";
 import { RespondToFriendRequestUseCase } from "../../application/use-cases/respond-to-friend-request.use-case";
 import { GetFriendsUseCase } from "../../application/use-cases/get-friends.use-case";
+import { GetFriendsPresenceUseCase } from "../../application/use-cases/get-friends-presence.use-case";
 import { GetIncomingRequestsUseCase } from "../../application/use-cases/get-incoming-requests.use-case";
 import { GetOutgoingRequestsUseCase } from "../../application/use-cases/get-outgoing-requests.use-case";
 import { GetRecommendationsUseCase } from "../../application/use-cases/get-recommendations.use-case";
@@ -39,6 +42,7 @@ export class FriendsController {
     private readonly getRecommendationsUseCase: GetRecommendationsUseCase,
     private readonly searchUsersUseCase: SearchUsersUseCase,
     private readonly removeFriendUseCase: RemoveFriendUseCase,
+    private readonly getFriendsPresenceUseCase: GetFriendsPresenceUseCase,
   ) {}
 
   @Get("search")
@@ -59,6 +63,28 @@ export class FriendsController {
   @Get()
   async getFriends(@Req() req: AuthenticatedRequest) {
     return this.getFriendsUseCase.execute(req.user.id);
+  }
+
+  @Get("presence")
+  @Header("Cache-Control", "no-store")
+  async getPresence(
+    @Req() req: AuthenticatedRequest,
+    @Query("ids") ids: string | undefined,
+  ) {
+    const userIds = typeof ids === "string" ? ids.split(",") : [];
+    if (
+      userIds.length === 0 ||
+      userIds.length > 100 ||
+      userIds.some((id) => !/^[A-Za-z0-9_-]{1,64}$/.test(id))
+    ) {
+      throw new BadRequestException(
+        "Provide 1 to 100 comma-separated user IDs",
+      );
+    }
+
+    return this.getFriendsPresenceUseCase.execute(req.user.id, [
+      ...new Set(userIds),
+    ]);
   }
 
   @Delete(":friendId")

@@ -1,7 +1,8 @@
 import { PresenceStatus } from "@kafka-events";
 
 export interface PresenceRepository {
-  setStatus(userId: string, status: PresenceStatus): Promise<void>;
+  touchSocket(userId: string, socketId: string): Promise<boolean>;
+  removeSocket(userId: string, socketId: string): Promise<boolean>;
   getStatus(userId: string): Promise<PresenceStatus>;
   getStatuses(userIds: string[]): Promise<Map<string, PresenceStatus>>;
 }

@@ -3,11 +3,11 @@ import { ConfigService } from '@nestjs/config';
 import { createClient, RedisClientType } from 'redis';
 import { PresenceRepository } from '../../application/ports/presence.repository';
 import { PresenceStatus } from '@kafka-events';
+import { presenceKey } from '@shared-utils/presence';
 
 @Injectable()
 export class RedisPresenceRepository implements PresenceRepository, OnModuleInit, OnModuleDestroy {
   private client: RedisClientType;
-  private readonly PRESENCE_PREFIX = 'presence:';
 
   constructor(private configService: ConfigService) {
     const redisUrl = this.configService.get<string>('REDIS_URL');
@@ -31,21 +31,16 @@ export class RedisPresenceRepository implements PresenceRepository, OnModuleInit
   }
 
   async getStatus(userId: string): Promise<PresenceStatus> {
-    const status = await this.client.get(`${this.PRESENCE_PREFIX}${userId}`);
-    return (status as PresenceStatus) || PresenceStatus.OFFLINE;
+    return (await this.client.exists(presenceKey(userId)))
+      ? PresenceStatus.ONLINE
+      : PresenceStatus.OFFLINE;
   }
 
   async getStatuses(userIds: string[]): Promise<Map<string, PresenceStatus>> {
-    const result = new Map<string, PresenceStatus>();
-    if (userIds.length === 0) return result;
-
-    const keys = userIds.map(id => `${this.PRESENCE_PREFIX}${id}`);
-    const statuses = await this.client.mGet(keys);
-
-    userIds.forEach((id, index) => {
-      result.set(id, (statuses[index] as PresenceStatus) || PresenceStatus.OFFLINE);
-    });
-
-    return result;
+    return new Map(
+      await Promise.all(
+        userIds.map(async (id) => [id, await this.getStatus(id)] as const),
+      ),
+    );
   }
 }

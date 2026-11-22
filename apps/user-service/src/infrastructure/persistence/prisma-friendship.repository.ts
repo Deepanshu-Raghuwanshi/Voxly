@@ -33,10 +33,14 @@ export class PrismaFriendshipRepository implements FriendshipRepository {
     });
   }
 
-  async findByUserId(userId: string): Promise<Friendship[]> {
+  async findByUserId(userId: string, otherUserIds?: string[]): Promise<Friendship[]> {
+    const otherUsers = otherUserIds && { in: otherUserIds };
     return this.prisma.friendship.findMany({
       where: {
-        OR: [{ userId1: userId }, { userId2: userId }],
+        OR: [
+          { userId1: userId, userId2: otherUsers },
+          { userId1: otherUsers, userId2: userId },
+        ],
       },
       orderBy: { createdAt: 'desc' },
     });
