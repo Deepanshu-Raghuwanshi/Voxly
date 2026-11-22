@@ -6,7 +6,7 @@ import {
 import { GroqAgentService } from "./groq-agent.service";
 import { CerebrasAgentService } from "./cerebras-agent.service";
 import { runWithFallbackChain } from "./ai-provider-chain";
-import { GROQ_TOOL_MODEL, CEREBRAS_MODEL } from "./ai-models";
+import { GROQ_MODEL, CEREBRAS_MODEL } from "./ai-models";
 
 @Injectable()
 export class AgentFallbackService implements AiAgentPort {
@@ -26,7 +26,7 @@ export class AgentFallbackService implements AiAgentPort {
       [
         {
           name: "groq",
-          model: GROQ_TOOL_MODEL,
+          model: GROQ_MODEL,
           feature: "agent",
           fn: () => this.groq.run(query, context, userId),
         },

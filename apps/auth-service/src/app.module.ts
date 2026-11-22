@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
+import { createLoggerConfig } from '@shared-logger';
 import { TerminusModule } from '@nestjs/terminus';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
@@ -26,14 +27,7 @@ import { GoogleStrategy } from './infrastructure/strategies/google.strategy';
       isGlobal: true,
       validate,
     }),
-    LoggerModule.forRoot({
-      pinoHttp: {
-        level: process.env.NODE_ENV !== 'production' ? 'debug' : 'info',
-        transport: process.env.NODE_ENV !== 'production'
-          ? { target: 'pino-pretty' }
-          : undefined,
-      },
-    }),
+    LoggerModule.forRoot(createLoggerConfig()),
     TerminusModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({

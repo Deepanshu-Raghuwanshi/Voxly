@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from "@nestjs/mongoose";
 import { LoggerModule } from "nestjs-pino";
+import { createLoggerConfig } from "@shared-logger";
 import { TerminusModule } from "@nestjs/terminus";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { validate } from "./config/env.validation";
@@ -22,15 +23,7 @@ import { RedisModule } from "./infrastructure/cache/redis.module";
           config.get<string>("MONGODB_URL") || "mongodb://localhost:27017/chat",
       }),
     }),
-    LoggerModule.forRoot({
-      pinoHttp: {
-        level: process.env.NODE_ENV !== "production" ? "debug" : "info",
-        transport:
-          process.env.NODE_ENV !== "production"
-            ? { target: "pino-pretty" }
-            : undefined,
-      },
-    }),
+    LoggerModule.forRoot(createLoggerConfig()),
     TerminusModule,
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 1000 }]),
     RedisModule,

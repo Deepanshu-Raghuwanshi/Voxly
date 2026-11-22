@@ -6,14 +6,14 @@ import type {
   ChatCompletionMessageParam,
 } from "groq-sdk/resources/chat/completions";
 import { TavilyWebSearchService } from "./tavily-web-search.service";
-import { GROQ_TOOL_MODEL, REASONING_EFFORT } from "./ai-models";
+import { GROQ_MODEL, REASONING_EFFORT } from "./ai-models";
 import {
   PersonaAgentPort,
   PersonaRunParams,
   PersonaAgentResult,
 } from "../../application/ports/persona-agent.port";
 
-const MODEL = GROQ_TOOL_MODEL;
+const MODEL = GROQ_MODEL;
 
 const WEB_SEARCH_TOOL: ChatCompletionTool = {
   type: "function",

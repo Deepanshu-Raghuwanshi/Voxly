@@ -6,9 +6,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import Groq from "groq-sdk";
 import { AiSmartReplierPort } from "../../application/ports/ai-smart-reply.port";
-import { GROQ_TEXT_MODEL } from "./ai-models";
-
-const MODEL = GROQ_TEXT_MODEL;
+import { GROQ_MODEL, REASONING_EFFORT } from "./ai-models";
 
 const SYSTEM_INSTRUCTION =
   "Generate exactly 3 short, natural chat reply suggestions (2–10 words each). " +
@@ -43,12 +41,13 @@ export class GroqSmartReplyService implements AiSmartReplierPort {
   ): Promise<string[]> {
     try {
       const result = await this.groq.chat.completions.create({
-        model: MODEL,
+        model: GROQ_MODEL,
         messages: [
           { role: "system", content: SYSTEM_INSTRUCTION },
           { role: "user", content: buildPrompt(messages) },
         ],
-        max_tokens: 120,
+        max_completion_tokens: 512,
+        reasoning_effort: REASONING_EFFORT,
         temperature: 0.8,
       });
 
