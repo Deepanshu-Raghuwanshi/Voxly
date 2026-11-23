@@ -9,7 +9,7 @@ export const useProfile = (options: Partial<UseQueryOptions<UserProfile>> = {}) 
 
   return useQuery({
     queryKey: ['profile'],
-    queryFn: () => authService.getProfile(),
+    queryFn: ({ signal }) => authService.getProfile(signal),
     enabled: isAuthenticated,
     meta: {
       onSuccess: (data: UserProfile) => {

@@ -5,7 +5,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
-import { randomBytes } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import * as bcrypt from "bcrypt";
 import { User } from "@prisma/client-auth";
 import { RegisterDto } from "@shared-types";
@@ -25,6 +25,8 @@ export interface GoogleProfile {
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
+  accessExpiresAt: Date;
+  refreshExpiresAt: Date;
   user: {
     id: string;
     email: string;
@@ -33,6 +35,14 @@ export interface AuthResponse {
     avatarUrl?: string;
   };
 }
+
+const ACCESS_TTL_SECONDS = 15 * 60;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const REFRESH_TTL_MS = 7 * DAY_MS;
+const SESSION_TTL_MS = 30 * DAY_MS;
+
+const hashRefreshToken = (token: string) =>
+  createHash("sha256").update(token).digest("hex");
 
 @Injectable()
 export class AuthUseCases {
@@ -171,6 +181,20 @@ export class AuthUseCases {
   }
 
   async login(user: Partial<User>): Promise<AuthResponse> {
+    const createdAt = new Date();
+    const session = await this.issueTokens(user, createdAt);
+    await this.prisma.refreshToken.create({
+      data: {
+        tokenHash: hashRefreshToken(session.refreshToken),
+        userId: session.user.id,
+        expiresAt: session.refreshExpiresAt,
+        createdAt,
+      },
+    });
+    return session;
+  }
+
+  private async issueTokens(user: Partial<User>, createdAt: Date): Promise<AuthResponse> {
     if (!user.id || !user.email) {
       throw new UnauthorizedException("Invalid user data");
     }
@@ -178,38 +202,30 @@ export class AuthUseCases {
       throw new UnauthorizedException("Please verify your email first");
     }
 
-    const payload = { email: user.email, sub: user.id };
-    const accessToken = await this.jwtService.signAsync(payload, {
-      secret: process.env.JWT_ACCESS_SECRET || "access-secret",
-      expiresIn: "15m",
-    });
+    const now = Date.now();
+    const refreshExpiresAt = new Date(
+      Math.min(now + REFRESH_TTL_MS, createdAt.getTime() + SESSION_TTL_MS),
+    );
+    const iat = Math.floor(now / 1000);
+    const exp = Math.min(iat + ACCESS_TTL_SECONDS, Math.floor(refreshExpiresAt.getTime() / 1000));
+    if (exp <= iat) {
+      throw new UnauthorizedException("Session has expired");
+    }
 
-    const refreshToken = await this.generateRefreshToken(user.id);
-
+    const accessToken = await this.jwtService.signAsync(
+      { email: user.email, sub: user.id, iat },
+      {
+        secret: process.env.JWT_ACCESS_SECRET || "access-secret",
+        expiresIn: exp - iat,
+      },
+    );
     return {
       accessToken,
-      refreshToken,
-      user: {
-        id: user.id,
-        email: user.email,
-      },
+      accessExpiresAt: new Date(exp * 1000),
+      refreshToken: randomBytes(32).toString("hex"),
+      refreshExpiresAt,
+      user: { id: user.id, email: user.email },
     };
-  }
-
-  async generateRefreshToken(userId: string): Promise<string> {
-    const token = randomBytes(32).toString("hex");
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
-
-    await this.prisma.refreshToken.create({
-      data: {
-        token,
-        userId,
-        expiresAt,
-      },
-    });
-
-    return token;
   }
 
   async validateGoogleUser(profile: GoogleProfile) {
@@ -356,19 +372,34 @@ export class AuthUseCases {
   }
 
   async refreshTokens(token: string) {
+    const tokenHash = hashRefreshToken(token);
     const refreshToken = await this.prisma.refreshToken.findUnique({
-      where: { token },
+      where: { tokenHash },
       include: { user: true },
     });
 
-    if (!refreshToken || refreshToken.expiresAt < new Date()) {
+    if (!refreshToken || refreshToken.expiresAt <= new Date()) {
       throw new UnauthorizedException("Invalid or expired refresh token");
     }
 
-    // Rotate refresh token
-    await this.prisma.refreshToken.delete({ where: { id: refreshToken.id } });
-
-    return this.login(refreshToken.user);
+    const session = await this.issueTokens(refreshToken.user, refreshToken.createdAt);
+    const now = new Date();
+    const { count } = await this.prisma.refreshToken.updateMany({
+      where: {
+        id: refreshToken.id,
+        tokenHash,
+        expiresAt: { gt: now },
+        createdAt: { gt: new Date(now.getTime() - SESSION_TTL_MS) },
+      },
+      data: {
+        tokenHash: hashRefreshToken(session.refreshToken),
+        expiresAt: session.refreshExpiresAt,
+      },
+    });
+    if (count !== 1) {
+      throw new UnauthorizedException("Invalid or expired refresh token");
+    }
+    return session;
   }
 
   async changeEmail(userId: string, newEmail: string) {
@@ -428,7 +459,7 @@ export class AuthUseCases {
 
   async logout(token: string) {
     await this.prisma.refreshToken.deleteMany({
-      where: { token },
+      where: { tokenHash: hashRefreshToken(token) },
     });
   }
 }

@@ -15,6 +15,7 @@ import { Throttle } from "@nestjs/throttler";
 import { RegisterDto, LoginDto } from "@shared-types";
 import {
   AuthUseCases,
+  AuthResponse,
   GoogleProfile,
 } from "../../application/use-cases/auth.use-cases";
 
@@ -82,14 +83,9 @@ export class AuthController {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    const {
-      accessToken,
-      refreshToken,
-      user: userData,
-    } = await this.authUseCases.login(user);
-
-    this.setAuthCookies(res, accessToken, refreshToken);
-    return userData;
+    const session = await this.authUseCases.login(user);
+    this.setAuthCookies(res, session);
+    return session.user;
   }
 
   @Post("logout")
@@ -113,14 +109,9 @@ export class AuthController {
       throw new UnauthorizedException("No refresh token provided");
     }
 
-    const {
-      accessToken,
-      refreshToken: newRefreshToken,
-      user: userData,
-    } = await this.authUseCases.refreshTokens(refreshToken);
-
-    this.setAuthCookies(res, accessToken, newRefreshToken);
-    return userData;
+    const session = await this.authUseCases.refreshTokens(refreshToken);
+    this.setAuthCookies(res, session);
+    return session.user;
   }
 
   @Get("google")
@@ -135,32 +126,28 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { accessToken, refreshToken } =
+    const session =
       await this.authUseCases.validateGoogleUser(req.user as GoogleProfile);
 
-    this.setAuthCookies(res, accessToken, refreshToken);
+    this.setAuthCookies(res, session);
 
     // Redirect to frontend
     res.redirect(process.env.FRONTEND_URL + "/auth/success");
   }
 
-  private setAuthCookies(
-    res: Response,
-    accessToken: string,
-    refreshToken: string,
-  ) {
-    res.cookie("access_token", accessToken, {
+  private setAuthCookies(res: Response, session: AuthResponse) {
+    res.cookie("access_token", session.accessToken, {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      maxAge: 15 * 60 * 1000, // 15 mins
+      expires: session.accessExpiresAt,
     });
 
-    res.cookie("refresh_token", refreshToken, {
+    res.cookie("refresh_token", session.refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      expires: session.refreshExpiresAt,
     });
   }
 

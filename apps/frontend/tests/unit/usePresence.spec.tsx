@@ -13,6 +13,8 @@ import {
 } from "../../src/features/friends/hooks/usePresence";
 import { Message, MessageListResponse } from "@shared-types";
 import { chatService } from "../../src/features/chat/services/chat.service";
+import { useMessages } from "../../src/features/chat/hooks/useChat";
+import { authService } from "../../src/features/auth/services/auth.service";
 import { useChatStore } from "../../src/features/chat/store/useChatStore";
 import {
   refreshPresence,
@@ -45,10 +47,15 @@ vi.mock("../../src/features/friends/services/friends.service", () => ({
 
 vi.mock("../../src/features/chat/services/chat.service", () => ({
   chatService: {
+    getMessages: vi.fn(),
     markRead: vi
       .fn()
       .mockResolvedValue({ lastReadAt: new Date().toISOString() }),
   },
+}));
+
+vi.mock("../../src/features/auth/services/auth.service", () => ({
+  authService: { getProfile: vi.fn() },
 }));
 
 vi.mock("../../src/features/chat/store/useChatStore", () => {
@@ -65,6 +72,12 @@ vi.mock("../../src/features/chat/store/useChatStore", () => {
 
 let sharedQueryClient: QueryClient;
 let disablePresence: () => void;
+
+const Wrapper = ({ children }: { children: React.ReactNode }) => (
+  <QueryClientProvider client={sharedQueryClient}>
+    {children}
+  </QueryClientProvider>
+);
 
 function makeMessage(overrides: Partial<Message>): Message {
   return {
@@ -100,18 +113,15 @@ function getCache(conversationId = "conv-1") {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockSocket.connected = true;
+  mockSocket.active = true;
   vi.mocked(friendsService.getPresence).mockResolvedValue([]);
   sharedQueryClient = new QueryClient({
     defaultOptions: {
-      queries: { retry: false },
+      queries: { retry: false, staleTime: 60_000 },
       mutations: { retry: false },
     },
   });
-  const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={sharedQueryClient}>
-      {children}
-    </QueryClientProvider>
-  );
   // Reset useChatStore.getState to default (no active conversation) so tests
   // that don't override it get a clean baseline.
   vi.mocked(useChatStore.getState).mockReturnValue({
@@ -440,22 +450,111 @@ describe("usePresence — ai.message.new", () => {
     expect(getCache()?.pages[0].data).toHaveLength(1);
   });
 
-  it("seeds a new first page when the messages cache is empty", () => {
+  it("leaves an unopened chat uncached after either kind of realtime message", () => {
     act(() => {
       socketHandlers["ai.message.new"]?.(makeAiPayload());
+      socketHandlers["message.new"]?.({
+        messageId: "live-message",
+        conversationId: "conv-1",
+        sentAt: new Date().toISOString(),
+      });
     });
 
-    const cache = getCache();
-    expect(cache?.pages[0].data[0].id).toBe("ai-msg-1");
-    expect(cache?.pages[0].data[0].isAI).toBe(true);
+    expect(getCache()).toBeUndefined();
+  });
+
+  it("fetches the first and older API pages when opening after an incoming message", async () => {
+    const firstPage = {
+      data: [makeMessage({ id: "newest" }), makeMessage({ id: "previous" })],
+      hasMore: true,
+      nextCursor: "older-cursor",
+    };
+    const older = { data: [makeMessage({ id: "older" })], hasMore: false };
+    vi.mocked(chatService.getMessages)
+      .mockResolvedValueOnce(firstPage)
+      .mockResolvedValueOnce(older);
+    act(() => socketHandlers["ai.message.new"]?.(makeAiPayload({ id: "newest" })));
+    const { result } = renderHook(() => useMessages("conv-1"), { wrapper: Wrapper });
+
+    await waitFor(() => expect(result.current.data?.pages[0]).toEqual(firstPage));
+    expect(result.current.hasNextPage).toBe(true);
+    await act(async () => { await result.current.fetchNextPage(); });
+    await waitFor(() => expect(result.current.data?.pages).toEqual([firstPage, older]));
+    expect(chatService.getMessages).toHaveBeenNthCalledWith(1, "conv-1", { before: undefined });
+    expect(chatService.getMessages).toHaveBeenNthCalledWith(2, "conv-1", { before: "older-cursor" });
+  });
+
+  it("merges events received during the first fetch and deduplicates messages returned by the API", async () => {
+    const pendingHistory = Promise.withResolvers<MessageListResponse>();
+    vi.mocked(chatService.getMessages).mockReturnValueOnce(pendingHistory.promise);
+    const { result } = renderHook(() => useMessages("conv-1"), { wrapper: Wrapper });
+    const newer = makeAiPayload({ id: "new-message", createdAt: "2026-11-23T12:01:00Z" });
+    act(() => {
+      socketHandlers["ai.message.new"]?.(newer);
+      socketHandlers["ai.message.new"]?.(newer);
+      socketHandlers["message.new"]?.({
+        messageId: "already-in-history",
+        conversationId: "conv-1",
+        sentAt: "2026-11-23T12:00:00Z",
+      });
+    });
+
+    expect(result.current.isLoading).toBe(true);
+    const stored = makeMessage({
+      id: "already-in-history",
+      content: "Authoritative API content",
+      createdAt: "2026-11-23T12:00:00Z",
+    });
+    pendingHistory.resolve({ data: [stored], hasMore: true, nextCursor: "older-cursor" });
+
+    await waitFor(() => expect(result.current.data?.pages[0].data.map(({ id }) => id))
+      .toEqual(["new-message", stored.id]));
+    expect(result.current.data?.pages[0].data[1]).toEqual(stored);
+    expect(result.current.data?.pages[0].nextCursor).toBe("older-cursor");
+    expect(result.current.hasNextPage).toBe(true);
   });
 
   it("maps null toolUsed to undefined on the cached Message", () => {
+    seedCache([]);
     act(() => {
       socketHandlers["ai.message.new"]?.(makeAiPayload({ toolUsed: null }));
     });
 
     expect(getCache()?.pages[0].data[0].toolUsed).toBeUndefined();
+  });
+});
+
+describe("usePresence session reconnect", () => {
+  it("reconnects after revalidating the session and rejoins the active conversation", async () => {
+    vi.mocked(authService.getProfile).mockResolvedValue({
+      id: "user-a",
+      email: "user-a@example.invalid",
+    } as Awaited<ReturnType<typeof authService.getProfile>>);
+    vi.mocked(useChatStore.getState).mockReturnValue({
+      ...useChatStore.getState(),
+      activeConversationId: "conv-1",
+    });
+    const invalidate = vi.spyOn(sharedQueryClient, "invalidateQueries");
+    act(() => socketHandlers.connect(undefined));
+    mockSocket.connected = false;
+    mockSocket.active = false;
+    act(() => socketHandlers.disconnect("io server disconnect"));
+
+    await waitFor(() => expect(mockSocket.connect).toHaveBeenCalledOnce());
+    expect(authService.getProfile).toHaveBeenCalledOnce();
+    act(() => socketHandlers.connect(undefined));
+    expect(mockSocket.emit).toHaveBeenLastCalledWith("join.conversation", { conversationId: "conv-1" });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["messages"], refetchType: "active" });
+  });
+
+  it("does not reconnect after session validation fails", async () => {
+    vi.mocked(authService.getProfile).mockRejectedValue(new Error("Expired session"));
+    mockSocket.connected = false;
+    mockSocket.active = false;
+    await act(async () => socketHandlers.connect_error(new Error("Unauthorized")));
+
+    expect(authService.getProfile).toHaveBeenCalledOnce();
+    expect(mockSocket.connect).not.toHaveBeenCalled();
   });
 });
 

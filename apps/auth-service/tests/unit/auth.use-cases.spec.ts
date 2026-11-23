@@ -2,6 +2,8 @@ import { expect } from "chai";
 import * as sinon from "sinon";
 import { AuthUseCases } from "../../src/application/use-cases/auth.use-cases";
 import bcrypt from "bcrypt";
+import { createHash } from "node:crypto";
+import { UnauthorizedException } from "@nestjs/common";
 import authPayloads from "../fixtures/auth-payloads.json";
 import { PrismaService } from "../../src/infrastructure/persistence/prisma.service";
 import { JwtService } from "@nestjs/jwt";
@@ -34,6 +36,9 @@ describe("AuthUseCases (Unit)", () => {
       },
       refreshToken: {
         create: sinon.stub(),
+        findUnique: sinon.stub(),
+        updateMany: sinon.stub(),
+        deleteMany: sinon.stub(),
       },
       passwordReset: {
         findUnique: sinon.stub(),
@@ -90,12 +95,6 @@ describe("AuthUseCases (Unit)", () => {
       expect(token).to.match(/^[0-9a-f]{64}$/);
     });
 
-    it("generateRefreshToken returns a 64-char hex string", async () => {
-      prismaMock.refreshToken!.create!.resolves({});
-      const token = await authUseCases.generateRefreshToken("user-id");
-      expect(token).to.match(/^[0-9a-f]{64}$/);
-    });
-
     it("consecutive tokens are unique (no Math.random collision risk)", async () => {
       prismaMock.emailVerification!.upsert!.resolves({});
       const token1 =
@@ -103,6 +102,108 @@ describe("AuthUseCases (Unit)", () => {
       const token2 =
         await authUseCases.generateEmailVerificationToken("user-id");
       expect(token1).to.not.equal(token2);
+    });
+  });
+
+  describe("session lifetime and refresh rotation", () => {
+    const day = 86_400_000;
+    const now = Date.parse("2026-11-23T08:00:00.000Z");
+    const user = { id: "user-id", email: "user@example.com", isVerified: true };
+    const token = "existing-refresh-token";
+    const hash = (value: string) => createHash("sha256").update(value).digest("hex");
+
+    beforeEach(() => {
+      sinon.useFakeTimers({ now, toFake: ["Date"] });
+      jwtServiceMock.signAsync!.resolves("signed-access");
+      prismaMock.refreshToken.create!.resolves({});
+      prismaMock.refreshToken.updateMany!.resolves({ count: 1 });
+      prismaMock.refreshToken.findUnique!.resolves({
+        id: "session-id",
+        user,
+        createdAt: new Date(now - day),
+        expiresAt: new Date(now + day),
+      });
+    });
+
+    it("issues a fifteen-minute JWT and stores only the hash of the seven-day refresh cookie", async () => {
+      const session = await authUseCases.login(user);
+
+      expect(session.refreshToken).to.match(/^[0-9a-f]{64}$/);
+      expect(session.accessExpiresAt).to.deep.equal(new Date(now + 900_000));
+      expect(session.refreshExpiresAt).to.deep.equal(new Date(now + 7 * day));
+      expect(prismaMock.refreshToken.create!.firstCall.args[0].data).to.deep.equal({
+        tokenHash: hash(session.refreshToken),
+        userId: user.id,
+        createdAt: new Date(now),
+        expiresAt: session.refreshExpiresAt,
+      });
+    });
+
+    it("rotates on the existing session row and rolls expiry forward by seven days", async () => {
+      const session = await authUseCases.refreshTokens(token);
+
+      expect(prismaMock.refreshToken.findUnique!.firstCall.args[0].where).to.deep.equal({
+        tokenHash: hash(token),
+      });
+      const rotation = prismaMock.refreshToken.updateMany!.firstCall.args[0];
+      expect(rotation.where).to.include({ id: "session-id", tokenHash: hash(token) });
+      expect(rotation.data).to.deep.equal({
+        tokenHash: hash(session.refreshToken),
+        expiresAt: new Date(now + 7 * day),
+      });
+      expect(prismaMock.refreshToken.create!.called).to.equal(false);
+    });
+
+    it("caps both cookies and the signed JWT at the original session deadline", async () => {
+      const cutoff = new Date(now + 120_000);
+      prismaMock.refreshToken.findUnique!.resolves({
+        id: "session-id",
+        user,
+        createdAt: new Date(cutoff.getTime() - 30 * day),
+        expiresAt: new Date(now + day),
+      });
+
+      const session = await authUseCases.refreshTokens(token);
+      expect(session.accessExpiresAt).to.deep.equal(cutoff);
+      expect(session.refreshExpiresAt).to.deep.equal(cutoff);
+      const [, options] = jwtServiceMock.signAsync!.firstCall.args;
+      expect(options.expiresIn).to.equal(120);
+    });
+
+    for (const deadline of ["rolling", "absolute"]) {
+      it(`rejects refresh at the ${deadline} expiration boundary`, async () => {
+        prismaMock.refreshToken.findUnique!.resolves({
+          id: "session-id",
+          user,
+          createdAt: new Date(now - (deadline === "absolute" ? 30 : 7) * day),
+          expiresAt: new Date(deadline === "rolling" ? now : now + day),
+        });
+
+        await expectRefreshRejected();
+        expect(prismaMock.refreshToken.updateMany!.called).to.equal(false);
+      });
+    }
+
+    async function expectRefreshRejected() {
+      try {
+        await authUseCases.refreshTokens(token);
+        expect.fail("Expected refresh to fail");
+      } catch (error) {
+        expect(error).to.be.instanceOf(UnauthorizedException);
+      }
+    }
+
+    it("rejects a concurrent rotation loser and issues no replacement cookie", async () => {
+      prismaMock.refreshToken.updateMany!.resolves({ count: 0 });
+      await expectRefreshRejected();
+      expect(prismaMock.refreshToken.create!.called).to.equal(false);
+    });
+
+    it("revokes the stored hash on logout", async () => {
+      await authUseCases.logout(token);
+      expect(prismaMock.refreshToken.deleteMany!.firstCall.args[0]).to.deep.equal({
+        where: { tokenHash: hash(token) },
+      });
     });
   });
 

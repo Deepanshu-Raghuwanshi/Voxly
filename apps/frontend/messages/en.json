@@ -7,7 +7,8 @@
       "close": "Close",
       "submit": "Submit",
       "sending": "Sending...",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "retry": "Try again"
     },
     "errors": {
       "generic": "Something went wrong",
@@ -17,6 +18,10 @@
   },
   "features": {
     "auth": {
+      "session": {
+        "checking": "Checking your session…",
+        "failed": "Could not verify your session."
+      },
       "login": {
         "title": "Welcome Back",
         "subtitle": "Sign in to your account",
@@ -307,6 +312,7 @@
         "react_failed": "Failed to react to message",
         "open_failed": "Failed to open conversation",
         "not_found": "Conversation not found",
+        "history_failed": "Could not load message history.",
         "back_to_chats": "Back to conversations",
         "no_longer_friends": "You're no longer friends with this user",
         "rewrite_failed": "AI rewrite failed. Please try again.",

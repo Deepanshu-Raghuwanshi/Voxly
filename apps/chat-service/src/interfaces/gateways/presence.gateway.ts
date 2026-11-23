@@ -21,6 +21,11 @@ import {
 
 const PRESENCE_RENEWAL_MS = 30_000;
 
+interface SocketSession {
+  userId: string;
+  expiresAt?: number;
+}
+
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
@@ -38,6 +43,7 @@ export class PresenceGateway
 {
   private readonly logger = new Logger(PresenceGateway.name);
   private readonly presenceSockets = new Map<string, string>();
+  private readonly sessionTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private renewalTimer?: ReturnType<typeof setInterval>;
   private renewing = false;
 
@@ -54,12 +60,12 @@ export class PresenceGateway
 
   afterInit(namespace: Namespace): void {
     namespace.use((client, next) => {
-      const userId = this.getUserId(client);
-      if (!userId) {
+      const session = this.getSocketSession(client);
+      if (!session) {
         next(new Error("Unauthorized"));
         return;
       }
-      client.data.presenceUserId = userId;
+      client.data.presenceSession = session;
       next();
     });
   }
@@ -72,21 +78,31 @@ export class PresenceGateway
 
   onModuleDestroy(): void {
     clearInterval(this.renewalTimer);
+    for (const timer of this.sessionTimers.values()) clearTimeout(timer);
+    this.sessionTimers.clear();
     this.presenceSockets.clear();
   }
 
   async handleConnection(client: Socket) {
-    const userId: string | undefined = client.data.presenceUserId;
-    if (!userId) return;
+    const session: SocketSession | undefined = client.data.presenceSession;
+    if (!session) return;
 
+    const { userId, expiresAt } = session;
     await client.join(`user:${userId}`);
     if (!client.connected) return;
 
+    if (expiresAt !== undefined) {
+      this.sessionTimers.set(client.id, setTimeout(() => {
+        client.disconnect();
+      }, Math.max(0, expiresAt - Date.now())).unref());
+    }
     this.presenceSockets.set(client.id, userId);
     await this.touchPresence(userId, client.id);
   }
 
   async handleDisconnect(client: Socket) {
+    clearTimeout(this.sessionTimers.get(client.id));
+    this.sessionTimers.delete(client.id);
     const userId = this.presenceSockets.get(client.id);
     if (!userId) return;
 
@@ -183,6 +199,10 @@ export class PresenceGateway
   }
 
   private getUserId(client: Socket): string | null {
+    return this.getSocketSession(client)?.userId ?? null;
+  }
+
+  private getSocketSession(client: Socket): SocketSession | null {
     const token = client.handshake.auth?.token || client.handshake.query?.token;
 
     // Try to get from cookie if available
@@ -202,15 +222,17 @@ export class PresenceGateway
       typeof directUserId === "string" &&
       directUserId
     )
-      return directUserId;
+      return { userId: directUserId };
 
     if (!accessToken) return null;
 
     try {
-      const payload = this.jwtService.verify(accessToken);
-      return typeof payload.sub === "string" && payload.sub
-        ? payload.sub
-        : null;
+      const payload = this.jwtService.verify<{ sub?: string; exp?: number }>(accessToken);
+      if (typeof payload.sub !== "string" || !payload.sub ||
+          typeof payload.exp !== "number" || !Number.isFinite(payload.exp)) {
+        return null;
+      }
+      return { userId: payload.sub, expiresAt: payload.exp * 1000 };
     } catch (e) {
       this.logger.error(`Invalid token for presence gateway: ${e}`);
       return null;

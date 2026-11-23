@@ -3,8 +3,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { setupInterceptors } from '../../features/auth/services/refresh.interceptor';
+import { useAuthStore } from '../../features/auth/store/useAuthStore';
+import { useChatStore } from '../../features/chat/store/useChatStore';
 
 export default function TanstackProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -23,6 +25,13 @@ export default function TanstackProvider({ children }: { children: React.ReactNo
   useState(() => {
     setupInterceptors();
   });
+
+  useEffect(() => useAuthStore.subscribe((current, previous) => {
+    if (previous.user && previous.user.id !== current.user?.id) {
+      queryClient.clear();
+      useChatStore.setState(useChatStore.getInitialState());
+    }
+  }), [queryClient]);
 
   return (
     <QueryClientProvider client={queryClient}>
