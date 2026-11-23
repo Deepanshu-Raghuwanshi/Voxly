@@ -26,6 +26,7 @@ interface ConversationViewProps {
 
 export const ConversationView = ({ conversationId }: ConversationViewProps) => {
   const t = useTranslations("features.chat.errors");
+  const tCommon = useTranslations("common.buttons");
   const router = useRouter();
 
   const setActiveConversation = useChatStore(
@@ -36,6 +37,8 @@ export const ConversationView = ({ conversationId }: ConversationViewProps) => {
   const {
     data: messagesData,
     isLoading: isLoadingMsgs,
+    isLoadingError: isMessagesError,
+    refetch: refetchMessages,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -95,6 +98,20 @@ export const ConversationView = ({ conversationId }: ConversationViewProps) => {
           className="text-primary text-sm hover:underline"
         >
           {t("back_to_chats")}
+        </button>
+      </div>
+    );
+  }
+
+  if (isMessagesError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-3">
+        <p role="alert" className="text-foreground/60 text-sm">{t("history_failed")}</p>
+        <button
+          onClick={() => void refetchMessages()}
+          className="text-primary text-sm hover:underline"
+        >
+          {tCommon("retry")}
         </button>
       </div>
     );

@@ -101,6 +101,25 @@ describe("ConversationView — summarize state wiring", () => {
     vi.mocked(useMarkRead).mockReturnValue({
       mutate: vi.fn(),
     } as unknown as ReturnType<typeof useMarkRead>);
+    vi.mocked(useSummarizeConversation).mockReturnValue({
+      mutate: vi.fn(),
+      reset: vi.fn(),
+    } as unknown as ReturnType<typeof useSummarizeConversation>);
+  });
+
+  it("shows a retry when message history fails instead of rendering an empty timeline", () => {
+    const refetch = vi.fn();
+    vi.mocked(useMessages).mockReturnValue({
+      isLoading: false,
+      isLoadingError: true,
+      refetch,
+    } as unknown as ReturnType<typeof useMessages>);
+
+    renderWithIntl(<ConversationView conversationId="conv-1" />);
+    expect(screen.getByRole("alert").textContent).toBe("Could not load message history.");
+    expect(screen.queryByTestId("message-list")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(refetch).toHaveBeenCalledOnce();
   });
 
   it("opens the modal and calls summarize(50) when the summarize button is clicked", () => {

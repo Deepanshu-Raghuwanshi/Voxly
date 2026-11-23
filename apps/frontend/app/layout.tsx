@@ -7,6 +7,7 @@ import { MainContent } from "./MainContent";
 import { ThemeProvider } from "../src/shared/providers/ThemeProvider";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { SessionBoundary } from "../src/features/auth/components/SessionBoundary";
 
 export const metadata: Metadata = {
   title: "Voxly",
@@ -34,9 +35,11 @@ export default async function RootLayout({
         <NextIntlClientProvider messages={messages}>
           <TanstackProvider>
             <ThemeProvider>
-              <Navbar />
               <AnimatedBackground />
-              <MainContent>{children}</MainContent>
+              <SessionBoundary>
+                <Navbar />
+                <MainContent>{children}</MainContent>
+              </SessionBoundary>
             </ThemeProvider>
           </TanstackProvider>
         </NextIntlClientProvider>

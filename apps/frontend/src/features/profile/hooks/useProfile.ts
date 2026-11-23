@@ -26,6 +26,7 @@ export const useProfile = (userId?: string) => {
       return profileService.updateProfile(data);
     },
     onSuccess: (updatedUser: UserProfile) => {
+      if (useAuthStore.getState().user?.id !== updatedUser.id) return;
       setUser(updatedUser);
       queryClient.setQueryData(["profile", currentUser?.id], updatedUser);
       showToast.success(t("profile_updated"));
@@ -41,8 +42,9 @@ export const useProfile = (userId?: string) => {
       return profileService.uploadAvatar(file);
     },
     onSuccess: (data) => {
-      if (currentUser) {
-        const updatedUser = { ...currentUser, avatarUrl: data.avatarUrl };
+      const activeUser = useAuthStore.getState().user;
+      if (activeUser && activeUser.id === currentUser?.id) {
+        const updatedUser = { ...activeUser, avatarUrl: data.avatarUrl };
         setUser(updatedUser);
         queryClient.setQueryData(["profile", currentUser.id], updatedUser);
       }
@@ -79,6 +81,7 @@ export const useProfile = (userId?: string) => {
     mutationFn: (theme: "light" | "dark") =>
       profileService.updateProfile({ theme }),
     onSuccess: (updatedUser) => {
+      if (useAuthStore.getState().user?.id !== updatedUser.id) return;
       setUser(updatedUser);
       queryClient.setQueryData(["profile", currentUser?.id], updatedUser);
     },

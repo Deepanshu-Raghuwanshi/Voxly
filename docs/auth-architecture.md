@@ -47,3 +47,11 @@
 - **Email Verification**: Required for local registration to mitigate spam.
 - **Rate Limiting**: Throttler on all auth endpoints to mitigate brute-force.
 - **Universal ID**: Consistent identification across microservices.
+
+## 5. Session Lifetime
+
+- The access JWT expires after 15 minutes. The browser silently refreshes it once when a protected API request returns `401`.
+- A successful refresh rotates the cookie and extends its expiry by up to seven days. The server caps the JWT and refresh cookie at 30 days after the session row was created. Older sessions use the creation time of their last pre-migration rotation.
+- PostgreSQL stores the refresh token's SHA-256 hash. Rotation updates the existing row only if the presented hash is still current. Logout removes that hash and clears both cookies.
+- The frontend checks the session with the authenticated profile API before displaying protected pages. A temporary verification failure offers a retry. A rejected session redirects a protected link to sign-in.
+- Presence sockets disconnect at the access JWT deadline. The frontend validates the session before reconnecting and reloads the active conversation history to catch messages missed during reconnect.

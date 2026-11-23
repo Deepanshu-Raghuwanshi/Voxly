@@ -11,7 +11,6 @@ import cookieParser from "cookie-parser";
 import { AuthController } from "../../src/interfaces/controllers/auth.controller";
 import {
   AuthUseCases,
-  AuthResponse,
 } from "../../src/application/use-cases/auth.use-cases";
 import authPayloads from "../fixtures/auth-payloads.json";
 
@@ -85,8 +84,10 @@ describe("AuthController (Integration)", () => {
       authUseCasesMock.login.resolves({
         accessToken: tokens.access,
         refreshToken: tokens.refresh,
+        accessExpiresAt: new Date("2026-11-23T08:15:00Z"),
+        refreshExpiresAt: new Date("2026-11-30T08:00:00Z"),
         user: { id: user.id, email: user.email },
-      } as unknown as AuthResponse);
+      });
 
       const response = await request(app.getHttpServer())
         .post("/auth/login")
@@ -109,6 +110,43 @@ describe("AuthController (Integration)", () => {
 
       expect(response.status).to.equal(HttpStatus.UNAUTHORIZED);
       expect(response.body.message).to.equal("Invalid credentials");
+    });
+  });
+
+  describe("POST /auth/refresh", () => {
+    it("writes capped cookie expiry and returns only the identity", async () => {
+      const user = { id: "user-id", email: "user@example.com" };
+      const expiresAt = new Date("2026-11-23T08:02:00Z");
+      authUseCasesMock.refreshTokens.resolves({
+        accessToken: "new-access",
+        refreshToken: "new-refresh",
+        accessExpiresAt: expiresAt,
+        refreshExpiresAt: expiresAt,
+        user,
+      });
+
+      const response = await request(app.getHttpServer())
+        .post("/auth/refresh")
+        .set("Cookie", "refresh_token=previous-token")
+        .expect(HttpStatus.CREATED);
+
+      expect(authUseCasesMock.refreshTokens.calledWithExactly("previous-token")).to.equal(true);
+      expect(response.body).to.deep.equal(user);
+      const cookies = response.headers["set-cookie"];
+      expect(cookies[0]).to.contain("access_token=new-access");
+      expect(cookies[1]).to.contain("refresh_token=new-refresh");
+      for (const cookie of cookies) {
+        expect(cookie).to.contain(`Expires=${expiresAt.toUTCString()}`);
+        expect(cookie).to.contain("HttpOnly; Secure; SameSite=None");
+      }
+    });
+
+    it("returns 401 without writing cookies when no refresh cookie was sent", async () => {
+      const response = await request(app.getHttpServer())
+        .post("/auth/refresh")
+        .expect(HttpStatus.UNAUTHORIZED);
+
+      expect(response.headers["set-cookie"]).to.equal(undefined);
     });
   });
 

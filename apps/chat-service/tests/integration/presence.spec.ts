@@ -150,12 +150,12 @@ describeWithRedis("Presence with Socket.IO and Redis", function () {
     );
   }
 
-  async function connect(url: string, userId: string): Promise<Socket> {
+  async function connect(url: string, userId: string, accessToken = token(userId)): Promise<Socket> {
     const socket = io(`${url}/presence`, {
       forceNew: true,
       reconnection: false,
       transports: ["websocket"],
-      extraHeaders: { Cookie: `access_token=${token(userId)}` },
+      extraHeaders: { Cookie: `access_token=${accessToken}` },
     });
     sockets.push(socket);
     await new Promise<void>((resolve, reject) => {
@@ -248,6 +248,23 @@ describeWithRedis("Presence with Socket.IO and Redis", function () {
       .query({ ids: `${friend},` })
       .set("Cookie", `access_token=${token(viewer)}`)
       .expect(400);
+  });
+
+  it("disconnects an open socket when its JWT expires and accepts a renewed cookie", async () => {
+    clock.clockTimestamp = Math.floor(Date.now() / 1000);
+    const shortLived = jwt.sign({ sub: friend }, { expiresIn: 2 });
+    const socket = await connect(gatewayUrls[0], friend, shortLived);
+    const disconnected = new Promise<string>((resolve) => socket.once("disconnect", resolve));
+    await expectSocketCount(1);
+
+    expect(await disconnected).to.equal("io server disconnect");
+    await expectSocketCount(0);
+
+    const renewed = await connect(gatewayUrls[1], friend);
+    expect(renewed.connected).to.equal(true);
+    await expectSocketCount(1);
+    renewed.disconnect();
+    await expectSocketCount(0);
   });
 
   it("re-registers a still-connected socket when it renews an expired lease", async function () {

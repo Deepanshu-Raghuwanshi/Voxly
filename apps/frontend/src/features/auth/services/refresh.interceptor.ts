@@ -1,74 +1,50 @@
+import { isAxiosError } from 'axios';
+import type { InternalAxiosRequestConfig } from 'axios';
 import apiClient from '../../../shared/lib/apiClient';
 import { authService } from './auth.service';
 import { useAuthStore } from '../store/useAuthStore';
 
-interface FailedRequest {
-  resolve: (token: string | null) => void;
-  reject: (error: unknown) => void;
-}
-
-let isRefreshing = false;
-let failedQueue: FailedRequest[] = [];
-
-const processQueue = (error: unknown, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
-  });
-
-  failedQueue = [];
-};
+let installed = false;
+let refreshing: Promise<unknown> | undefined;
 
 export const setupInterceptors = () => {
-  apiClient.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-      const originalRequest = error.config;
+  if (installed) return;
+  installed = true;
 
-      if (
-        error.response?.status === 401 &&
-        !originalRequest._retry &&
-        !originalRequest.url?.includes('/auth/login') &&
-        !originalRequest.url?.includes('/auth/register') &&
-        !originalRequest.url?.includes('/auth/refresh')
-      ) {
-        if (isRefreshing) {
-          return new Promise(function (resolve, reject) {
-            failedQueue.push({ resolve, reject });
-          })
-            .then(() => {
-              return apiClient(originalRequest);
-            })
-            .catch((err) => {
-              return Promise.reject(err);
-            });
-        }
+  apiClient.interceptors.response.use(undefined, async (error: unknown) => {
+    if (!isAxiosError(error) || error.response?.status !== 401) throw error;
 
-        originalRequest._retry = true;
-        isRefreshing = true;
-
-        try {
-          await authService.refresh();
-          processQueue(null);
-          return apiClient(originalRequest);
-        } catch (refreshError) {
-          processQueue(refreshError, null);
-          useAuthStore.getState().logout();
-          authService.logout().catch(() => {}).finally(() => {
-            if (typeof window !== 'undefined') {
-              window.location.href = '/login';
-            }
-          });
-          return Promise.reject(refreshError);
-        } finally {
-          isRefreshing = false;
-        }
-      }
-
-      return Promise.reject(error);
+    const request = error.config as (InternalAxiosRequestConfig & {
+      sessionRetry?: boolean;
+    }) | undefined;
+    if (!request || request.signal?.aborted || request.url?.startsWith('/auth/')) {
+      throw error;
     }
-  );
+
+    const session = useAuthStore.getState();
+    const clearExpiredSession = () => {
+      const current = useAuthStore.getState();
+      if (current.user?.id === session.user?.id) current.logout();
+    };
+
+    if (request.sessionRetry) {
+      clearExpiredSession();
+      throw error;
+    }
+    request.sessionRetry = true;
+    refreshing ??= authService.refresh().finally(() => {
+      refreshing = undefined;
+    });
+
+    try {
+      await refreshing;
+    } catch (refreshError) {
+      if (!request.signal?.aborted && isAxiosError(refreshError) && refreshError.response?.status === 401) {
+        clearExpiredSession();
+      }
+      throw refreshError;
+    }
+
+    return apiClient(request);
+  });
 };

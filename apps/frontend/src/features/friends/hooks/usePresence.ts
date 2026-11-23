@@ -4,6 +4,8 @@ import { Message, MessageListResponse, Reaction } from "@shared-types";
 import { InfiniteData } from "@tanstack/react-query";
 import { io, Socket } from "socket.io-client";
 import { chatService } from "../../chat/services/chat.service";
+import { mergeRealtimeMessage } from "../../chat/services/message-cache";
+import { authService } from "../../auth/services/auth.service";
 import { useChatStore } from "../../chat/store/useChatStore";
 import {
   clearPresence,
@@ -129,30 +131,30 @@ export const usePresence = (enabled: boolean = true, userId?: string) => {
 
       let refreshTimer: ReturnType<typeof setTimeout> | undefined;
       let pendingRefresh: AbortController | undefined;
+      let connectedBefore = false;
+      let reconnectAfter = 0;
+      const sessionCheck = new AbortController();
+      const reconnectWithSession = () => {
+        if (connection.connected || connection.active || Date.now() < reconnectAfter) return;
+        reconnectAfter = Date.now() + PRESENCE_REFRESH_MS;
+        void authService.getProfile(sessionCheck.signal).then(() => {
+          if (!sessionCheck.signal.aborted && !connection.connected) connection.connect();
+        }).catch(() => {
+          // A later presence check can recover from a temporary failure.
+        });
+      };
       const scheduleRefresh = () => {
         clearTimeout(refreshTimer);
         if (document.visibilityState === "hidden") return;
 
         refreshTimer = setTimeout(() => {
+          reconnectWithSession();
           pendingRefresh?.abort();
           const controller = new AbortController();
           pendingRefresh = controller;
-          void refreshPresence(controller.signal)
-            .then((refreshed) => {
-              // The HTTP client may have refreshed the session after an
-              // expired cookie caused Socket.IO to reject the handshake.
-              if (
-                refreshed &&
-                !controller.signal.aborted &&
-                !connection.active &&
-                !connection.connected
-              ) {
-                connection.connect();
-              }
-            })
-            .catch(() => {
-              // The next focus, reconnect or interval will retry.
-            });
+          void refreshPresence(controller.signal).catch(() => {
+            // The next focus, reconnect or interval will retry.
+          });
         }, 100);
       };
       const unsubscribe = onPresenceUsersAdded(scheduleRefresh);
@@ -162,9 +164,25 @@ export const usePresence = (enabled: boolean = true, userId?: string) => {
       scheduleRefresh();
 
       connection.on("connect", () => {
+        reconnectAfter = 0;
         const { activeConversationId } = useChatStore.getState();
         if (activeConversationId) joinConversationRoom(activeConversationId);
+        if (connectedBefore) {
+          void queryClient.invalidateQueries({ queryKey: ["conversations"] });
+          void queryClient.invalidateQueries({
+            queryKey: ["messages"],
+            refetchType: "active",
+          });
+        }
+        connectedBefore = true;
         scheduleRefresh();
+      });
+
+      connection.on("disconnect", (reason) => {
+        if (reason === "io server disconnect") reconnectWithSession();
+      });
+      connection.on("connect_error", () => {
+        if (!connection.active) reconnectWithSession();
       });
 
       connection.on("presence.updated", (data: PresenceUpdate) => {
@@ -210,37 +228,7 @@ export const usePresence = (enabled: boolean = true, userId?: string) => {
           updatedAt: data.sentAt,
         };
 
-        // Prepend to the first page of messages cache for that conversation.
-        // If the conversation was never opened, seed a first page so messages
-        // appear instantly when the user clicks it (useInfiniteQuery will
-        // refetch in background once mounted, since staleTime defaults to 0).
-        queryClient.setQueryData<InfiniteData<MessageListResponse>>(
-          ["messages", data.conversationId],
-          (old) => {
-            if (!old || !old.pages.length) {
-              return {
-                pages: [
-                  { data: [newMessage], hasMore: false, nextCursor: undefined },
-                ],
-                pageParams: [undefined],
-              };
-            }
-            // Guard against duplicates: the backend refetch may have already
-            // placed this message in cache before the socket event arrives.
-            const alreadyExists = old.pages.some((page) =>
-              page.data?.some((msg) => msg.id === newMessage.id),
-            );
-            if (alreadyExists) return old;
-
-            const newPages = [...old.pages];
-            const firstPage = newPages[0];
-            newPages[0] = {
-              ...firstPage,
-              data: [newMessage, ...(firstPage.data ?? [])],
-            };
-            return { ...old, pages: newPages };
-          },
-        );
+        mergeRealtimeMessage(queryClient, newMessage);
         // Refresh conversation list to update order and unread counts
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
 
@@ -412,33 +400,7 @@ export const usePresence = (enabled: boolean = true, userId?: string) => {
           updatedAt: data.updatedAt,
         };
 
-        queryClient.setQueryData<InfiniteData<MessageListResponse>>(
-          ["messages", data.conversationId],
-          (old) => {
-            if (!old || !old.pages.length) {
-              return {
-                pages: [
-                  {
-                    data: [aiMessage],
-                    hasMore: false,
-                    nextCursor: undefined,
-                  },
-                ],
-                pageParams: [undefined],
-              };
-            }
-            const alreadyExists = old.pages.some((page) =>
-              page.data?.some((msg) => msg.id === aiMessage.id),
-            );
-            if (alreadyExists) return old;
-            const newPages = [...old.pages];
-            newPages[0] = {
-              ...newPages[0],
-              data: [aiMessage, ...(newPages[0].data ?? [])],
-            };
-            return { ...old, pages: newPages };
-          },
-        );
+        mergeRealtimeMessage(queryClient, aiMessage);
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
       });
       return () => {
@@ -448,6 +410,7 @@ export const usePresence = (enabled: boolean = true, userId?: string) => {
         clearInterval(refreshInterval);
         clearTimeout(refreshTimer);
         pendingRefresh?.abort();
+        sessionCheck.abort();
         connection.removeAllListeners();
         connection.disconnect();
         socket = null;

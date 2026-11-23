@@ -1,9 +1,19 @@
 import apiClient from '../../../shared/lib/apiClient';
 import { UserProfile } from '@shared-types';
 
+// Tabs share the API cookies, so serialize the requests that replace them.
+async function withSessionLock<T>(request: () => Promise<T>): Promise<T> {
+  if (typeof navigator !== 'undefined' && navigator.locks) {
+    return await navigator.locks.request('voxly-auth-session', request);
+  }
+  return request();
+}
+
 export const authService = {
   async login(credentials: Record<string, string>): Promise<UserProfile> {
-    const response = await apiClient.post<UserProfile>('/auth/login', credentials);
+    const response = await withSessionLock(() =>
+      apiClient.post<UserProfile>('/auth/login', credentials),
+    );
     return response.data;
   },
 
@@ -13,12 +23,14 @@ export const authService = {
   },
 
   async logout() {
-    const response = await apiClient.post('/auth/logout');
+    const response = await withSessionLock(() => apiClient.post('/auth/logout'));
     return response.data;
   },
 
   async refresh() {
-    const response = await apiClient.post('/auth/refresh');
+    const response = await withSessionLock(() => apiClient.post<UserProfile>('/auth/refresh', undefined, {
+      timeout: 10_000,
+    }));
     return response.data;
   },
 
@@ -47,8 +59,8 @@ export const authService = {
     return response.data;
   },
 
-  async getProfile() {
-    const response = await apiClient.get('/profile');
+  async getProfile(signal?: AbortSignal) {
+    const response = await apiClient.get<UserProfile>('/profile', { signal, timeout: 10_000 });
     return response.data;
   },
 };
